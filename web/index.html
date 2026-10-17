@@ -196,14 +196,22 @@
   </script>
 
   <script>
+    // Bersihkan cache Service Worker & CacheStorage lama agar browser HP selalu memuat versi terbaru
+    if ('caches' in window) {
+      caches.keys().then(function(names) {
+        for (let name of names) {
+          caches.delete(name);
+        }
+      });
+    }
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.getRegistrations().then(function(registrations) {
         for (let r of registrations) {
-          r.update();
+          r.unregister();
         }
       });
     }
   </script>
-  <script src="flutter_bootstrap.js" async></script>
+  <script src="flutter_bootstrap.js?v=20261017_update3" async></script>
 </body>
 </html>
