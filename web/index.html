@@ -52,6 +52,20 @@
       display: block !important;
     }
 
+    /* Sembunyikan floating badge / Netlify Drawer */
+    netlify-drawer,
+    #netlify-drawer,
+    .netlify-drawer,
+    iframe[src*="netlify"],
+    iframe[title*="Netlify"],
+    [data-netlify-badge],
+    [data-netlify-drawer] {
+      display: none !important;
+      visibility: hidden !important;
+      pointer-events: none !important;
+      opacity: 0 !important;
+    }
+
     #loading-screen {
       position: fixed;
       top: 0;
