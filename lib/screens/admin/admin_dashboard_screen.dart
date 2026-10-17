@@ -193,54 +193,59 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       },
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Dashboard Manajemen Denah'),
+          title: Text(
+            MediaQuery.of(context).size.width < 500 ? 'Admin Denah' : 'Dashboard Manajemen Denah',
+            style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+          ),
           leading: IconButton(
             icon: const Icon(Icons.arrow_back),
             tooltip: 'Keluar & Kembali',
             onPressed: _logout,
           ),
-        actions: [
-          // Indikator Status Koneksi
-          Container(
-            margin: const EdgeInsets.symmetric(vertical: 12),
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-            decoration: BoxDecoration(
-              color: isConnected ? Colors.green.shade800 : Colors.amber.shade900,
-              borderRadius: BorderRadius.circular(20),
+          actions: [
+            // Indikator Status Koneksi
+            Container(
+              margin: const EdgeInsets.symmetric(vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: isConnected ? Colors.green.shade800 : Colors.amber.shade900,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    isConnected ? Icons.cloud_done : Icons.cloud_off,
+                    size: 13,
+                    color: Colors.white,
+                  ),
+                  if (MediaQuery.of(context).size.width >= 420) ...[
+                    const SizedBox(width: 4),
+                    Text(
+                      isConnected ? 'Online' : 'Offline',
+                      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white),
+                    ),
+                  ],
+                ],
+              ),
             ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  isConnected ? Icons.cloud_done : Icons.cloud_off,
-                  size: 14,
-                  color: Colors.white,
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  isConnected ? 'Supabase Online' : 'Mode Demo / Offline',
-                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white),
-                ),
-              ],
+            const SizedBox(width: 4),
+
+            IconButton(
+              tooltip: 'Refresh Data',
+              icon: const Icon(Icons.refresh),
+              onPressed: () => RoomRepository.instance.fetchRooms(),
             ),
-          ),
-          const SizedBox(width: 8),
 
-          IconButton(
-            tooltip: 'Refresh Data',
-            icon: const Icon(Icons.refresh),
-            onPressed: () => RoomRepository.instance.fetchRooms(),
-          ),
-
-          IconButton(
-            tooltip: 'Keluar Admin',
-            icon: const Icon(Icons.logout),
-            onPressed: _logout,
-          ),
-          const SizedBox(width: 8),
-        ],
-      ),
-      body: ValueListenableBuilder<List<RoomModel>>(
+            IconButton(
+              tooltip: 'Keluar Admin',
+              icon: const Icon(Icons.logout),
+              onPressed: _logout,
+            ),
+            const SizedBox(width: 4),
+          ],
+        ),
+        body: ValueListenableBuilder<List<RoomModel>>(
         valueListenable: RoomRepository.instance.roomsNotifier,
         builder: (context, allRooms, _) {
           // Filter data berdasarkan search, lantai, dan kategori
@@ -259,124 +264,208 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             children: [
               // Panel Statistik & Tombol Aksi Cepat
               Container(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 color: isDark ? const Color(0xFF1E293B) : Colors.white,
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Row(
-                      children: [
-                        // Statistik Total Ruangan
-                        _buildStatChip('Total', allRooms.length.toString(), Colors.blueGrey),
-                        const SizedBox(width: 8),
-                        _buildStatChip(
-                          'Dasar',
-                          allRooms.where((r) => r.floor == 1).length.toString(),
-                          AppColors.primary,
-                        ),
-                        const SizedBox(width: 8),
-                        _buildStatChip(
-                          'Lt. 1',
-                          allRooms.where((r) => r.floor == 2).length.toString(),
-                          Colors.indigo,
-                        ),
-                        const SizedBox(width: 8),
-                        _buildStatChip(
-                          'Lt. 2',
-                          allRooms.where((r) => r.floor == 3).length.toString(),
-                          Colors.purple,
-                        ),
-                        const Spacer(),
-
-                        // Tombol Migrasi Otomatis jika Supabase aktif
-                        if (SupabaseConfig.isConfigured)
-                          OutlinedButton.icon(
-                            onPressed: _seedDataToSupabase,
-                            icon: const Icon(Icons.cloud_upload_outlined, size: 18),
-                            label: const Text('Migrasi 50+ Data ke Supabase'),
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: AppColors.primary,
-                            ),
+                    // Row 1: Chips & Tombol Aksi (Horizontally scrollable on mobile)
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: [
+                          _buildStatChip('Total', allRooms.length.toString(), Colors.blueGrey),
+                          const SizedBox(width: 8),
+                          _buildStatChip(
+                            'Dasar',
+                            allRooms.where((r) => r.floor == 1).length.toString(),
+                            AppColors.primary,
                           ),
-                        const SizedBox(width: 10),
-
-                        // Tombol Tambah Ruangan Baru
-                        ElevatedButton.icon(
-                          onPressed: () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(builder: (_) => const RoomFormScreen()),
-                            );
-                          },
-                          icon: const Icon(Icons.add, size: 18),
-                          label: const Text('Tambah Ruangan'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primary,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          const SizedBox(width: 8),
+                          _buildStatChip(
+                            'Lt. 1',
+                            allRooms.where((r) => r.floor == 2).length.toString(),
+                            Colors.indigo,
                           ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 14),
-
-                    // Filter Bar: Search + Lantai + Kategori
-                    Row(
-                      children: [
-                        // Search Box
-                        Expanded(
-                          flex: 3,
-                          child: TextField(
-                            controller: _searchController,
-                            decoration: InputDecoration(
-                              hintText: 'Cari berdasarkan nama, kode, atau deskripsi...',
-                              prefixIcon: const Icon(Icons.search, size: 20),
-                              suffixIcon: _searchController.text.isNotEmpty
-                                  ? IconButton(
-                                      icon: const Icon(Icons.clear, size: 18),
-                                      onPressed: () {
-                                        setState(() => _searchController.clear());
-                                      },
-                                    )
-                                  : null,
-                              isDense: true,
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                            ),
-                            onChanged: (_) => setState(() {}),
+                          const SizedBox(width: 8),
+                          _buildStatChip(
+                            'Lt. 2',
+                            allRooms.where((r) => r.floor == 3).length.toString(),
+                            Colors.purple,
                           ),
-                        ),
-                        const SizedBox(width: 12),
-
-                        // Filter Lantai
-                        DropdownButton<int>(
-                          value: _selectedFloorFilter,
-                          items: const [
-                            DropdownMenuItem(value: 0, child: Text('Semua Lantai')),
-                            DropdownMenuItem(value: 1, child: Text('Lantai Dasar')),
-                            DropdownMenuItem(value: 2, child: Text('Lantai 1')),
-                            DropdownMenuItem(value: 3, child: Text('Lantai 2')),
-                          ],
-                          onChanged: (val) {
-                            if (val != null) setState(() => _selectedFloorFilter = val);
-                          },
-                        ),
-                        const SizedBox(width: 12),
-
-                        // Filter Kategori
-                        DropdownButton<RoomCategory?>(
-                          value: _selectedCategoryFilter,
-                          hint: const Text('Semua Kategori'),
-                          items: [
-                            const DropdownMenuItem(value: null, child: Text('Semua Kategori')),
-                            ...RoomCategory.values.map(
-                              (c) => DropdownMenuItem(
-                                value: c,
-                                child: Text(RoomColors.labelFromCategory(c)),
+                          const SizedBox(width: 12),
+                          if (SupabaseConfig.isConfigured) ...[
+                            OutlinedButton.icon(
+                              onPressed: _seedDataToSupabase,
+                              icon: const Icon(Icons.cloud_upload_outlined, size: 16),
+                              label: const Text('Migrasi 50+ Data'),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: AppColors.primary,
+                                visualDensity: VisualDensity.compact,
                               ),
                             ),
+                            const SizedBox(width: 8),
                           ],
-                          onChanged: (val) => setState(() => _selectedCategoryFilter = val),
-                        ),
-                      ],
+                          ElevatedButton.icon(
+                            onPressed: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(builder: (_) => const RoomFormScreen()),
+                              );
+                            },
+                            icon: const Icon(Icons.add, size: 16),
+                            label: const Text('Tambah Ruangan'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.primary,
+                              foregroundColor: Colors.white,
+                              visualDensity: VisualDensity.compact,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Filter Bar: Search + Lantai + Kategori (Responsive)
+                    LayoutBuilder(
+                      builder: (context, constraints) {
+                        final isMobile = constraints.maxWidth < 650;
+                        if (isMobile) {
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              // Search input full width
+                              TextField(
+                                controller: _searchController,
+                                decoration: InputDecoration(
+                                  hintText: 'Cari nama, kode, deskripsi...',
+                                  prefixIcon: const Icon(Icons.search, size: 20),
+                                  suffixIcon: _searchController.text.isNotEmpty
+                                      ? IconButton(
+                                          icon: const Icon(Icons.clear, size: 18),
+                                          onPressed: () => setState(() => _searchController.clear()),
+                                        )
+                                      : null,
+                                  isDense: true,
+                                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                                ),
+                                onChanged: (_) => setState(() {}),
+                              ),
+                              const SizedBox(height: 8),
+                              // Dua Dropdown berdampingan
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                                      decoration: BoxDecoration(
+                                        border: Border.all(color: isDark ? Colors.white24 : Colors.black26),
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: DropdownButtonHideUnderline(
+                                        child: DropdownButton<int>(
+                                          value: _selectedFloorFilter,
+                                          isExpanded: true,
+                                          items: const [
+                                            DropdownMenuItem(value: 0, child: Text('Semua Lantai', style: TextStyle(fontSize: 13))),
+                                            DropdownMenuItem(value: 1, child: Text('Lantai Dasar', style: TextStyle(fontSize: 13))),
+                                            DropdownMenuItem(value: 2, child: Text('Lantai 1', style: TextStyle(fontSize: 13))),
+                                            DropdownMenuItem(value: 3, child: Text('Lantai 2', style: TextStyle(fontSize: 13))),
+                                          ],
+                                          onChanged: (val) {
+                                            if (val != null) setState(() => _selectedFloorFilter = val);
+                                          },
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                                      decoration: BoxDecoration(
+                                        border: Border.all(color: isDark ? Colors.white24 : Colors.black26),
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: DropdownButtonHideUnderline(
+                                        child: DropdownButton<RoomCategory?>(
+                                          value: _selectedCategoryFilter,
+                                          isExpanded: true,
+                                          hint: const Text('Semua Kategori', style: TextStyle(fontSize: 13)),
+                                          items: [
+                                            const DropdownMenuItem(value: null, child: Text('Semua Kategori', style: TextStyle(fontSize: 13))),
+                                            ...RoomCategory.values.map(
+                                              (c) => DropdownMenuItem(
+                                                value: c,
+                                                child: Text(RoomColors.labelFromCategory(c), style: const TextStyle(fontSize: 13)),
+                                              ),
+                                            ),
+                                          ],
+                                          onChanged: (val) => setState(() => _selectedCategoryFilter = val),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          );
+                        }
+
+                        // Desktop: 1 baris
+                        return Row(
+                          children: [
+                            Expanded(
+                              flex: 3,
+                              child: TextField(
+                                controller: _searchController,
+                                decoration: InputDecoration(
+                                  hintText: 'Cari berdasarkan nama, kode, atau deskripsi...',
+                                  prefixIcon: const Icon(Icons.search, size: 20),
+                                  suffixIcon: _searchController.text.isNotEmpty
+                                      ? IconButton(
+                                          icon: const Icon(Icons.clear, size: 18),
+                                          onPressed: () => setState(() => _searchController.clear()),
+                                        )
+                                      : null,
+                                  isDense: true,
+                                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                                ),
+                                onChanged: (_) => setState(() {}),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            DropdownButton<int>(
+                              value: _selectedFloorFilter,
+                              items: const [
+                                DropdownMenuItem(value: 0, child: Text('Semua Lantai')),
+                                DropdownMenuItem(value: 1, child: Text('Lantai Dasar')),
+                                DropdownMenuItem(value: 2, child: Text('Lantai 1')),
+                                DropdownMenuItem(value: 3, child: Text('Lantai 2')),
+                              ],
+                              onChanged: (val) {
+                                if (val != null) setState(() => _selectedFloorFilter = val);
+                              },
+                            ),
+                            const SizedBox(width: 12),
+                            DropdownButton<RoomCategory?>(
+                              value: _selectedCategoryFilter,
+                              hint: const Text('Semua Kategori'),
+                              items: [
+                                const DropdownMenuItem(value: null, child: Text('Semua Kategori')),
+                                ...RoomCategory.values.map(
+                                  (c) => DropdownMenuItem(
+                                    value: c,
+                                    child: Text(RoomColors.labelFromCategory(c)),
+                                  ),
+                                ),
+                              ],
+                              onChanged: (val) => setState(() => _selectedCategoryFilter = val),
+                            ),
+                          ],
+                        );
+                      },
                     ),
                   ],
                 ),
@@ -411,115 +500,178 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                           final room = filteredRooms[index];
                           return Card(
                             elevation: 1.5,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                            child: ListTile(
-                              leading: Container(
-                                width: 44,
-                                height: 44,
-                                decoration: BoxDecoration(
-                                  color: room.color,
-                                  shape: BoxShape.circle,
-                                  border: Border.all(color: Colors.white, width: 2),
-                                ),
-                                child: Center(
-                                  child: Text(
-                                    room.code,
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 11,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              title: Row(
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            child: Padding(
+                              padding: const EdgeInsets.all(12),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Expanded(
-                                    child: Text(
-                                      room.name,
-                                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                                    ),
-                                  ),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                                    decoration: BoxDecoration(
-                                      color: room.color.withValues(alpha: 0.12),
-                                      borderRadius: BorderRadius.circular(6),
-                                    ),
-                                    child: Text(
-                                      RoomColors.labelFromCategory(room.category),
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w600,
-                                        color: room.color,
+                                  // Baris Atas: Lingkaran Kode + Nama + Kategori Badge
+                                  Row(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      // Lingkaran Kode Ruangan
+                                      Container(
+                                        width: 44,
+                                        height: 44,
+                                        decoration: BoxDecoration(
+                                          color: room.color,
+                                          shape: BoxShape.circle,
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: room.color.withValues(alpha: 0.3),
+                                              blurRadius: 4,
+                                              offset: const Offset(0, 2),
+                                            ),
+                                          ],
+                                        ),
+                                        child: Center(
+                                          child: Text(
+                                            room.code,
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 12,
+                                            ),
+                                          ),
+                                        ),
                                       ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              subtitle: Padding(
-                                padding: const EdgeInsets.only(top: 4),
-                                child: Row(
-                                  children: [
-                                    Text(
-                                      floorLabelFull(room.floor),
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w500,
-                                        color: isDark ? Colors.white70 : Colors.black87,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 12),
-                                    Text(
-                                      'Pin: (${room.xRatio.toStringAsFixed(3)}, ${room.yRatio.toStringAsFixed(3)})',
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        color: isDark ? Colors.white54 : Colors.black45,
-                                      ),
-                                    ),
-                                    if (room.images.isNotEmpty) ...[
                                       const SizedBox(width: 12),
-                                      Icon(Icons.photo_library, size: 14, color: isDark ? Colors.white54 : Colors.black45),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        '${room.images.length} foto',
-                                        style: TextStyle(
-                                          fontSize: 11,
-                                          color: isDark ? Colors.white54 : Colors.black45,
+
+                                      // Nama Ruangan & Badges
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              room.name,
+                                              style: const TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 15,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 6),
+                                            Wrap(
+                                              spacing: 6,
+                                              runSpacing: 4,
+                                              children: [
+                                                Container(
+                                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                                  decoration: BoxDecoration(
+                                                    color: room.color.withValues(alpha: 0.12),
+                                                    borderRadius: BorderRadius.circular(6),
+                                                  ),
+                                                  child: Text(
+                                                    RoomColors.labelFromCategory(room.category),
+                                                    style: TextStyle(
+                                                      fontSize: 11,
+                                                      fontWeight: FontWeight.w600,
+                                                      color: room.color,
+                                                    ),
+                                                  ),
+                                                ),
+                                                Container(
+                                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                                  decoration: BoxDecoration(
+                                                    color: isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.05),
+                                                    borderRadius: BorderRadius.circular(6),
+                                                  ),
+                                                  child: Text(
+                                                    floorLabelFull(room.floor),
+                                                    style: TextStyle(
+                                                      fontSize: 11,
+                                                      color: isDark ? Colors.white70 : Colors.black87,
+                                                    ),
+                                                  ),
+                                                ),
+                                                if (room.images.isNotEmpty)
+                                                  Container(
+                                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                                    decoration: BoxDecoration(
+                                                      color: Colors.blue.withValues(alpha: 0.1),
+                                                      borderRadius: BorderRadius.circular(6),
+                                                    ),
+                                                    child: Row(
+                                                      mainAxisSize: MainAxisSize.min,
+                                                      children: [
+                                                        const Icon(Icons.photo_library, size: 12, color: Colors.blue),
+                                                        const SizedBox(width: 4),
+                                                        Text(
+                                                          '${room.images.length} foto',
+                                                          style: const TextStyle(
+                                                            fontSize: 11,
+                                                            color: Colors.blue,
+                                                            fontWeight: FontWeight.bold,
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ),
+                                              ],
+                                            ),
+                                          ],
                                         ),
                                       ),
                                     ],
-                                  ],
-                                ),
-                              ),
-                              trailing: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  // Tombol Quick Visual Pin Picker
-                                  IconButton(
-                                    tooltip: 'Atur Posisi Pin di Denah',
-                                    icon: const Icon(Icons.pin_drop_outlined, color: AppColors.primary),
-                                    onPressed: () => _quickAdjustPin(room),
                                   ),
 
-                                  // Tombol Edit
-                                  IconButton(
-                                    tooltip: 'Edit Data Ruangan',
-                                    icon: const Icon(Icons.edit_outlined),
-                                    onPressed: () {
-                                      Navigator.of(context).push(
-                                        MaterialPageRoute(
-                                          builder: (_) => RoomFormScreen(initialRoom: room),
+                                  const SizedBox(height: 10),
+                                  const Divider(height: 1),
+                                  const SizedBox(height: 6),
+
+                                  // Baris Bawah: Info Koordinat Pin & Tombol Aksi
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: Row(
+                                          children: [
+                                            Icon(
+                                              Icons.location_on_outlined,
+                                              size: 14,
+                                              color: isDark ? Colors.white54 : Colors.black45,
+                                            ),
+                                            const SizedBox(width: 4),
+                                            Text(
+                                              'Pin: (${room.xRatio.toStringAsFixed(3)}, ${room.yRatio.toStringAsFixed(3)})',
+                                              style: TextStyle(
+                                                fontSize: 11,
+                                                color: isDark ? Colors.white54 : Colors.black45,
+                                              ),
+                                            ),
+                                          ],
                                         ),
-                                      );
-                                    },
-                                  ),
+                                      ),
 
-                                  // Tombol Hapus
-                                  IconButton(
-                                    tooltip: 'Hapus Ruangan',
-                                    icon: const Icon(Icons.delete_outline, color: Colors.red),
-                                    onPressed: () => _deleteRoom(room),
+                                      // Tombol Quick Visual Pin Picker
+                                      IconButton(
+                                        tooltip: 'Atur Posisi Pin di Denah',
+                                        icon: const Icon(Icons.pin_drop_outlined, color: AppColors.primary, size: 20),
+                                        visualDensity: VisualDensity.compact,
+                                        onPressed: () => _quickAdjustPin(room),
+                                      ),
+
+                                      // Tombol Edit
+                                      IconButton(
+                                        tooltip: 'Edit Data Ruangan',
+                                        icon: const Icon(Icons.edit_outlined, size: 20),
+                                        visualDensity: VisualDensity.compact,
+                                        onPressed: () {
+                                          Navigator.of(context).push(
+                                            MaterialPageRoute(
+                                              builder: (_) => RoomFormScreen(initialRoom: room),
+                                            ),
+                                          );
+                                        },
+                                      ),
+
+                                      // Tombol Hapus
+                                      IconButton(
+                                        tooltip: 'Hapus Ruangan',
+                                        icon: const Icon(Icons.delete_outline, color: Colors.red, size: 20),
+                                        visualDensity: VisualDensity.compact,
+                                        onPressed: () => _deleteRoom(room),
+                                      ),
+                                    ],
                                   ),
                                 ],
                               ),
@@ -531,6 +683,17 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             ],
           );
         },
+      ),
+      floatingActionButton: FloatingActionButton(
+        tooltip: 'Tambah Ruangan Baru',
+        backgroundColor: AppColors.primary,
+        foregroundColor: Colors.white,
+        onPressed: () {
+          Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => const RoomFormScreen()),
+          );
+        },
+        child: const Icon(Icons.add),
       ),
     ),
   );
