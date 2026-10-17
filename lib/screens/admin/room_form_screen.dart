@@ -227,26 +227,26 @@ class _RoomFormScreenState extends State<RoomFormScreen> {
 
   Future<void> _pickAndUploadImages() async {
     try {
-      final images = await StorageService.instance.pickMultiImages();
-      if (images.isEmpty) return;
+      // Panggil pemilih file langsung di awal agar gesture user tidak diblokir browser
+      final pickedList = await StorageService.instance.pickImagesFromStorage(allowMultiple: true);
+      if (pickedList.isEmpty) return;
 
       setState(() {
         _isUploadingImage = true;
-        _uploadStatusText = 'Mempersiapkan ${images.length} foto...';
+        _uploadStatusText = 'Mempersiapkan ${pickedList.length} foto...';
       });
 
       int successCount = 0;
-      for (int i = 0; i < images.length; i++) {
-        final img = images[i];
+      for (int i = 0; i < pickedList.length; i++) {
+        final item = pickedList[i];
         if (!mounted) break;
         setState(() {
-          _uploadStatusText = 'Mengunggah (${i + 1}/${images.length})...';
+          _uploadStatusText = 'Mengunggah (${i + 1}/${pickedList.length})...';
         });
 
-        final bytes = await img.readAsBytes();
         final publicUrl = await StorageService.instance.uploadImageBytes(
-          bytes: bytes,
-          originalFileName: img.name,
+          bytes: item.bytes,
+          originalFileName: item.name,
           roomCode: _codeController.text.trim(),
         );
 
@@ -263,6 +263,7 @@ class _RoomFormScreenState extends State<RoomFormScreen> {
           SnackBar(
             content: Text('Berhasil mengunggah $successCount foto ke Supabase Storage.'),
             backgroundColor: Colors.green.shade700,
+            duration: const Duration(seconds: 3),
           ),
         );
       }
@@ -279,6 +280,7 @@ class _RoomFormScreenState extends State<RoomFormScreen> {
           SnackBar(
             content: Text('Gagal mengunggah foto: $e'),
             backgroundColor: Colors.red.shade700,
+            duration: const Duration(seconds: 4),
           ),
         );
       }
@@ -294,18 +296,17 @@ class _RoomFormScreenState extends State<RoomFormScreen> {
 
   Future<void> _pickFromCamera() async {
     try {
-      final img = await StorageService.instance.pickImageFromCamera();
-      if (img == null) return;
+      final item = await StorageService.instance.pickImageFromCamera();
+      if (item == null) return;
 
       setState(() {
         _isUploadingImage = true;
         _uploadStatusText = 'Mengunggah foto kamera...';
       });
 
-      final bytes = await img.readAsBytes();
       final publicUrl = await StorageService.instance.uploadImageBytes(
-        bytes: bytes,
-        originalFileName: img.name,
+        bytes: item.bytes,
+        originalFileName: item.name,
         roomCode: _codeController.text.trim(),
       );
 
@@ -318,8 +319,9 @@ class _RoomFormScreenState extends State<RoomFormScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text('Foto kamera berhasil diunggah.'),
+            content: const Text('Foto kamera berhasil diunggah ke Supabase Storage.'),
             backgroundColor: Colors.green.shade700,
+            duration: const Duration(seconds: 3),
           ),
         );
       }
@@ -336,6 +338,7 @@ class _RoomFormScreenState extends State<RoomFormScreen> {
           SnackBar(
             content: Text('Gagal mengambil/mengunggah foto: $e'),
             backgroundColor: Colors.red.shade700,
+            duration: const Duration(seconds: 4),
           ),
         );
       }

@@ -1,7 +1,16 @@
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'supabase_service.dart';
+
+/// Model data gambar hasil pilihan pengguna (kompatibel Web, HP, dan PC)
+class PickedImageData {
+  final Uint8List bytes;
+  final String name;
+
+  PickedImageData({required this.bytes, required this.name});
+}
 
 class StorageService {
   StorageService._internal();
@@ -10,51 +19,88 @@ class StorageService {
   static const String bucketName = 'room-images';
   final ImagePicker _picker = ImagePicker();
 
-  /// Memilih satu foto dari Galeri (HP) atau File Explorer Folder (PC/Web)
-  Future<XFile?> pickImageFromGallery() async {
+  /// Memilih foto dari Galeri HP atau Folder PC/Web menggunakan FilePicker
+  /// (bekerja native 100% di semua browser desktop & mobile) dengan fallback ke ImagePicker.
+  Future<List<PickedImageData>> pickImagesFromStorage({bool allowMultiple = true}) async {
+    // 1. Coba FilePicker (paling stabil & native di Web CanvasKit & Browser)
     try {
-      final XFile? image = await _picker.pickImage(
-        source: ImageSource.gallery,
-      );
-      return image;
-    } catch (e) {
-      debugPrint('[StorageService] Gagal memilih gambar dari galeri: $e');
-      return null;
-    }
-  }
+      final List<PlatformFile> files = [];
+      if (allowMultiple) {
+        final res = await FilePicker.pickFiles(type: FileType.image);
+        files.addAll(res);
+      } else {
+        final f = await FilePicker.pickFile(type: FileType.image);
+        if (f != null) files.add(f);
+      }
 
-  /// Memilih banyak foto sekaligus dari Galeri / Folder (otomatis fallback ke single jika multi-pilih tidak didukung browser)
-  Future<List<XFile>> pickMultiImages() async {
-    try {
-      final List<XFile> images = await _picker.pickMultiImage();
-      if (images.isNotEmpty) return images;
+      if (files.isNotEmpty) {
+        final list = <PickedImageData>[];
+        for (final f in files) {
+          final bytes = await f.readAsBytes();
+          if (bytes.isNotEmpty) {
+            list.add(PickedImageData(bytes: bytes, name: f.name));
+          }
+        }
+        if (list.isNotEmpty) {
+          debugPrint('[StorageService] Berhasil memilih ${list.length} foto via FilePicker');
+          return list;
+        }
+      }
     } catch (e) {
-      debugPrint('[StorageService] pickMultiImage gagal atau tidak didukung browser ($e), mencoba fallback...');
+      debugPrint('[StorageService] FilePicker error: $e, mencoba fallback ImagePicker...');
     }
 
+    // 2. Fallback ke ImagePicker jika FilePicker tidak menghasilkan berkas
     try {
-      final single = await _picker.pickImage(source: ImageSource.gallery);
-      if (single != null) return [single];
+      final List<XFile> xfiles = [];
+      if (allowMultiple) {
+        final multi = await _picker.pickMultiImage();
+        xfiles.addAll(multi);
+      }
+      if (xfiles.isEmpty) {
+        final single = await _picker.pickImage(source: ImageSource.gallery);
+        if (single != null) xfiles.add(single);
+      }
+
+      final list = <PickedImageData>[];
+      for (final xf in xfiles) {
+        final bytes = await xf.readAsBytes();
+        list.add(PickedImageData(bytes: bytes, name: xf.name));
+      }
+      return list;
     } catch (e2) {
-      debugPrint('[StorageService] Fallback pickImage juga gagal: $e2');
+      debugPrint('[StorageService] ImagePicker fallback error: $e2');
     }
+
     return [];
   }
 
   /// Memilih foto langsung dari Kamera (di HP membuka kamera langsung, di PC/Web membuka file dialog)
-  Future<XFile?> pickImageFromCamera() async {
+  Future<PickedImageData?> pickImageFromCamera() async {
+    // 1. Coba ImagePicker Kamera
     try {
       final XFile? image = await _picker.pickImage(
         source: ImageSource.camera,
       );
-      if (image != null) return image;
+      if (image != null) {
+        final bytes = await image.readAsBytes();
+        return PickedImageData(bytes: bytes, name: image.name);
+      }
     } catch (e) {
-      debugPrint('[StorageService] Kamera tidak didukung/gagal ($e), mencoba fallback galeri...');
-      try {
-        final fallback = await _picker.pickImage(source: ImageSource.gallery);
-        return fallback;
-      } catch (_) {}
+      debugPrint('[StorageService] ImagePicker kamera gagal ($e), mencoba fallback...');
     }
+
+    // 2. Fallback: Di browser PC/desktop yang tidak punya kamera langsung, buka pemilih berkas
+    try {
+      final PlatformFile? f = await FilePicker.pickFile(type: FileType.image);
+      if (f != null) {
+        final bytes = await f.readAsBytes();
+        return PickedImageData(bytes: bytes, name: f.name);
+      }
+    } catch (e2) {
+      debugPrint('[StorageService] Camera fallback error: $e2');
+    }
+
     return null;
   }
 
