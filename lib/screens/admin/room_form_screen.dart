@@ -89,6 +89,63 @@ class _RoomFormScreenState extends State<RoomFormScreen> {
     }
   }
 
+  Future<void> _showResultDialog({
+    required bool isSuccess,
+    required String title,
+    required String message,
+  }) async {
+    await showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 12),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+        actionsPadding: const EdgeInsets.fromLTRB(24, 12, 24, 20),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: isSuccess
+                    ? Colors.green.withValues(alpha: 0.15)
+                    : Colors.red.withValues(alpha: 0.15),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                isSuccess ? Icons.check_circle_rounded : Icons.warning_rounded,
+                color: isSuccess ? Colors.green.shade700 : Colors.red.shade700,
+                size: 28,
+              ),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Text(
+                title,
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
+        ),
+        content: Text(
+          message,
+          style: const TextStyle(fontSize: 14, height: 1.5),
+        ),
+        actions: [
+          ElevatedButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: isSuccess ? Colors.green.shade700 : AppColors.primary,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 10),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            child: Text(isSuccess ? 'Lanjut' : 'Tutup'),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _handleSave() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -114,23 +171,37 @@ class _RoomFormScreenState extends State<RoomFormScreen> {
       }
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              isEditing ? 'Ruangan berhasil diperbarui' : 'Ruangan baru berhasil ditambahkan',
-            ),
-            backgroundColor: Colors.green,
-          ),
+        await _showResultDialog(
+          isSuccess: true,
+          title: isEditing ? 'Berhasil Diperbarui' : 'Berhasil Ditambahkan',
+          message: isEditing
+              ? 'Data ruangan "${room.code} - ${room.name}" berhasil diperbarui ke Supabase.'
+              : 'Ruangan baru "${room.code} - ${room.name}" berhasil disimpan ke Supabase.',
         );
-        Navigator.of(context).pop(true);
+        if (mounted) Navigator.of(context).pop(true);
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Gagal menyimpan: $e'),
-            backgroundColor: Colors.red,
-          ),
+        String title = 'Gagal Menyimpan';
+        String msg = e.toString();
+        if (msg.contains('rooms_code_key') ||
+            msg.contains('23505') ||
+            msg.contains('duplicate key')) {
+          title = 'Kode Ruangan Sudah Ada';
+          final existing =
+              RoomRepository.instance.findByCode(_codeController.text.trim());
+          final existingName =
+              existing != null ? ' ("${existing.name}")' : '';
+          msg =
+              'Kode ruangan "${_codeController.text.trim()}"$existingName sudah terdaftar di database.\n\nSilakan gunakan kode ruangan lain atau edit ruangan tersebut langsung dari daftar dashboard.';
+        } else {
+          msg = 'Terjadi kendala saat menyimpan ke database:\n$msg';
+        }
+
+        await _showResultDialog(
+          isSuccess: false,
+          title: title,
+          message: msg,
         );
       }
     } finally {
@@ -200,8 +271,19 @@ class _RoomFormScreenState extends State<RoomFormScreen> {
                                     border: OutlineInputBorder(),
                                     prefixIcon: Icon(Icons.tag),
                                   ),
-                                  validator: (v) =>
-                                      (v == null || v.trim().isEmpty) ? 'Wajib diisi' : null,
+                                  validator: (v) {
+                                    if (v == null || v.trim().isEmpty) {
+                                      return 'Wajib diisi';
+                                    }
+                                    final trimmed = v.trim();
+                                    if (!isEditing) {
+                                      final existing = RoomRepository.instance.findByCode(trimmed);
+                                      if (existing != null) {
+                                        return 'Kode "$trimmed" sudah ada (${existing.name})';
+                                      }
+                                    }
+                                    return null;
+                                  },
                                 ),
                               ),
                               const SizedBox(width: 14),
