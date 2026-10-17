@@ -45,10 +45,14 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
 
     try {
       final rawInput = _emailController.text.trim();
-      String email = rawInput;
+      String email = rawInput.toLowerCase();
+      // Koreksi otomatis jika pengguna salah ketik 'grhtama' (kurang huruf 'a')
+      if (email.contains('grhtama')) {
+        email = email.replaceAll('grhtama', 'grhatama');
+      }
       // Mendukung input langsung berupa username 'admin' atau tanpa domain @
       if (!email.contains('@')) {
-        if (email.toLowerCase() == 'admin') {
+        if (email == 'admin') {
           email = 'admin@grhatama.id';
         } else {
           email = '$email@grhatama.id';
@@ -76,10 +80,23 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
         return;
       }
 
-      await SupabaseService.instance.signInWithPassword(
-        email: email,
-        password: password,
-      );
+      try {
+        await SupabaseService.instance.signInWithPassword(
+          email: email,
+          password: password,
+        );
+      } catch (authErr) {
+        // Toleransi jika password diketik dengan huruf kecil 'admin111111'
+        if (password.isNotEmpty && password[0] == password[0].toLowerCase()) {
+          final capitalized = password[0].toUpperCase() + password.substring(1);
+          await SupabaseService.instance.signInWithPassword(
+            email: email,
+            password: capitalized,
+          );
+        } else {
+          rethrow;
+        }
+      }
 
       if (mounted) {
         Navigator.of(context).pushReplacement(
