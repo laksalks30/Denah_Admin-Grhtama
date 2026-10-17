@@ -3,8 +3,6 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/services.dart' show Clipboard, ClipboardData;
 import 'package:url_launcher/url_launcher.dart';
 import '../main.dart';
-import '../services/supabase_service.dart';
-import 'admin/admin_dashboard_screen.dart';
 import 'admin/admin_login_screen.dart';
 
 class InfoScreen extends StatelessWidget {
@@ -126,10 +124,9 @@ class InfoScreen extends StatelessWidget {
           tooltip: 'Portal Admin',
           icon: const Icon(Icons.admin_panel_settings_outlined, color: Colors.white),
           onPressed: () {
-            final isAuth = SupabaseService.instance.isAuthenticated;
             Navigator.of(context).push(
               MaterialPageRoute(
-                builder: (_) => isAuth ? const AdminDashboardScreen() : const AdminLoginScreen(),
+                builder: (_) => const AdminLoginScreen(),
               ),
             );
           },
@@ -571,10 +568,9 @@ class InfoScreen extends StatelessWidget {
           // Tombol Portal Pengelola / Admin
           OutlinedButton.icon(
             onPressed: () {
-              final isAuth = SupabaseService.instance.isAuthenticated;
               Navigator.of(context).push(
                 MaterialPageRoute(
-                  builder: (_) => isAuth ? const AdminDashboardScreen() : const AdminLoginScreen(),
+                  builder: (_) => const AdminLoginScreen(),
                 ),
               );
             },

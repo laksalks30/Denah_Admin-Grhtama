@@ -22,8 +22,10 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
   @override
   void initState() {
     super.initState();
-    _emailController.text = 'admin@grhatama.id';
-    _passwordController.text = 'Admin111111';
+    // Selalu reset sesi lama agar wajib memasukkan email & password
+    SupabaseService.instance.signOut();
+    _emailController.text = '';
+    _passwordController.text = '';
   }
 
   @override
@@ -62,8 +64,8 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
       }
 
       await SupabaseService.instance.signInWithPassword(
-        email: _emailController.text,
-        password: _passwordController.text,
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
       );
 
       if (mounted) {
@@ -219,6 +221,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                         keyboardType: TextInputType.emailAddress,
                         decoration: const InputDecoration(
                           labelText: 'Email Admin',
+                          hintText: 'admin@grhatama.id',
                           prefixIcon: Icon(Icons.email_outlined),
                           border: OutlineInputBorder(),
                         ),
@@ -240,6 +243,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                         obscureText: _obscurePassword,
                         decoration: InputDecoration(
                           labelText: 'Password',
+                          hintText: 'Masukkan kata sandi admin',
                           prefixIcon: const Icon(Icons.lock_outline),
                           border: const OutlineInputBorder(),
                           suffixIcon: IconButton(

@@ -184,9 +184,21 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final isConnected = SupabaseConfig.isConfigured && SupabaseService.instance.isAuthenticated;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Dashboard Manajemen Denah'),
+    return PopScope(
+      canPop: true,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) {
+          SupabaseService.instance.signOut();
+        }
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Dashboard Manajemen Denah'),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            tooltip: 'Keluar & Kembali',
+            onPressed: _logout,
+          ),
         actions: [
           // Indikator Status Koneksi
           Container(
@@ -520,8 +532,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           );
         },
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildStatChip(String label, String value, Color color) {
     return Container(
