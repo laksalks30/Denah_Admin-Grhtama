@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show Clipboard, ClipboardData;
 import '../../main.dart';
 import '../../models/room_model.dart';
 import '../../services/room_repository.dart';
+import '../../services/storage_service.dart';
 import '../../utils/floor_label.dart';
 import '../../utils/image_url_resolver.dart';
 import 'visual_pin_picker_screen.dart';
@@ -29,6 +31,8 @@ class _RoomFormScreenState extends State<RoomFormScreen> {
   late RoomCategory _category;
   late List<String> _images;
   bool _isLoading = false;
+  bool _isUploadingImage = false;
+  String? _uploadStatusText;
 
   bool get isEditing => widget.initialRoom != null;
 
@@ -219,6 +223,294 @@ class _RoomFormScreenState extends State<RoomFormScreen> {
         _imageUrlController.clear();
       });
     }
+  }
+
+  Future<void> _pickAndUploadImages() async {
+    try {
+      final images = await StorageService.instance.pickMultiImages();
+      if (images.isEmpty) return;
+
+      setState(() {
+        _isUploadingImage = true;
+        _uploadStatusText = 'Mempersiapkan ${images.length} foto...';
+      });
+
+      int successCount = 0;
+      for (int i = 0; i < images.length; i++) {
+        final img = images[i];
+        if (!mounted) break;
+        setState(() {
+          _uploadStatusText = 'Mengunggah (${i + 1}/${images.length})...';
+        });
+
+        final bytes = await img.readAsBytes();
+        final publicUrl = await StorageService.instance.uploadImageBytes(
+          bytes: bytes,
+          originalFileName: img.name,
+          roomCode: _codeController.text.trim(),
+        );
+
+        if (mounted) {
+          setState(() {
+            _images.add(publicUrl);
+          });
+        }
+        successCount++;
+      }
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Berhasil mengunggah $successCount foto ke Supabase Storage.'),
+            backgroundColor: Colors.green.shade700,
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('[RoomFormScreen] Upload error: $e');
+      if (!mounted) return;
+      final msg = e.toString();
+      if (msg.contains('BUCKET_NOT_FOUND')) {
+        _showBucketInstructionDialog();
+      } else if (msg.contains('STORAGE_RLS_RESTRICTED')) {
+        _showStorageRlsDialog();
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Gagal mengunggah foto: $e'),
+            backgroundColor: Colors.red.shade700,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isUploadingImage = false;
+          _uploadStatusText = null;
+        });
+      }
+    }
+  }
+
+  Future<void> _pickFromCamera() async {
+    try {
+      final img = await StorageService.instance.pickImageFromCamera();
+      if (img == null) return;
+
+      setState(() {
+        _isUploadingImage = true;
+        _uploadStatusText = 'Mengunggah foto kamera...';
+      });
+
+      final bytes = await img.readAsBytes();
+      final publicUrl = await StorageService.instance.uploadImageBytes(
+        bytes: bytes,
+        originalFileName: img.name,
+        roomCode: _codeController.text.trim(),
+      );
+
+      if (mounted) {
+        setState(() {
+          _images.add(publicUrl);
+        });
+      }
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Foto kamera berhasil diunggah.'),
+            backgroundColor: Colors.green.shade700,
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('[RoomFormScreen] Camera upload error: $e');
+      if (!mounted) return;
+      final msg = e.toString();
+      if (msg.contains('BUCKET_NOT_FOUND')) {
+        _showBucketInstructionDialog();
+      } else if (msg.contains('STORAGE_RLS_RESTRICTED')) {
+        _showStorageRlsDialog();
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Gagal mengambil/mengunggah foto: $e'),
+            backgroundColor: Colors.red.shade700,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isUploadingImage = false;
+          _uploadStatusText = null;
+        });
+      }
+    }
+  }
+
+  void _showBucketInstructionDialog() {
+    const sqlScript = '''-- 1. Buat bucket room-images
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('room-images', 'room-images', true)
+ON CONFLICT (id) DO UPDATE SET public = true;
+
+-- 2. Kebijakan akses upload & baca untuk publik
+CREATE POLICY "Allow public all" ON storage.objects
+FOR ALL TO public
+USING (bucket_id = 'room-images')
+WITH CHECK (bucket_id = 'room-images');''';
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Row(
+          children: [
+            Icon(Icons.folder_special, color: Colors.amber, size: 28),
+            SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                'Bucket Storage Belum Siap',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Supabase Storage membutuhkan bucket bernama "room-images" agar foto dari galeri atau folder dapat disimpan.',
+                style: TextStyle(fontSize: 13, height: 1.4),
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                'Cara Mengaktifkan (1 Menit):',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+              ),
+              const SizedBox(height: 4),
+              const Text(
+                '1. Buka Supabase Dashboard > SQL Editor\n2. Tempel dan jalankan script SQL berikut:',
+                style: TextStyle(fontSize: 12, height: 1.4),
+              ),
+              const SizedBox(height: 8),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.05),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.black12),
+                ),
+                child: const SelectableText(
+                  sqlScript,
+                  style: TextStyle(fontFamily: 'monospace', fontSize: 11),
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          OutlinedButton.icon(
+            icon: const Icon(Icons.copy, size: 16),
+            label: const Text('Salin Script SQL'),
+            onPressed: () {
+              Clipboard.setData(const ClipboardData(text: sqlScript));
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Script SQL disalin! Jalankan di SQL Editor Supabase Anda.'),
+                  backgroundColor: Colors.teal,
+                ),
+              );
+            },
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Tutup'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showStorageRlsDialog() {
+    const sqlScript = '''-- Berikan izin upload dan baca ke storage.objects
+CREATE POLICY "Allow public all" ON storage.objects
+FOR ALL TO public
+USING (bucket_id = 'room-images')
+WITH CHECK (bucket_id = 'room-images');''';
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Row(
+          children: [
+            Icon(Icons.lock_outline, color: Colors.redAccent, size: 28),
+            SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                'Izin Upload Ditolak (RLS)',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Supabase Storage memblokir upload karena Row-Level Security (RLS) pada storage.objects belum mengizinkan upload publik.',
+                style: TextStyle(fontSize: 13, height: 1.4),
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                'Solusi: Jalankan SQL ini di SQL Editor Supabase:',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+              ),
+              const SizedBox(height: 8),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.05),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.black12),
+                ),
+                child: const SelectableText(
+                  sqlScript,
+                  style: TextStyle(fontFamily: 'monospace', fontSize: 11),
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          OutlinedButton.icon(
+            icon: const Icon(Icons.copy, size: 16),
+            label: const Text('Salin SQL'),
+            onPressed: () {
+              Clipboard.setData(const ClipboardData(text: sqlScript));
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Script SQL disalin! Jalankan di SQL Editor Supabase.'),
+                  backgroundColor: Colors.teal,
+                ),
+              );
+            },
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Tutup'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -454,14 +746,95 @@ class _RoomFormScreenState extends State<RoomFormScreen> {
                             'Foto / Galeri Ruangan',
                             style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                           ),
+                          const SizedBox(height: 4),
                           Text(
-                            'Masukkan URL foto online (misal: https://... dari Google Drive / hosting / Supabase Storage), atau path aset lokal yang sudah tersedia di proyek.',
+                            'Unggah foto langsung dari Galeri HP / Folder PC ke Supabase Storage, atau masukkan link manual.',
                             style: TextStyle(
                               fontSize: 12,
                               color: isDark ? Colors.white60 : Colors.black54,
                             ),
                           ),
+                          const SizedBox(height: 16),
+
+                          // Tombol Upload dari Galeri / Folder & Kamera
+                          Wrap(
+                            spacing: 12,
+                            runSpacing: 10,
+                            crossAxisAlignment: WrapCrossAlignment.center,
+                            children: [
+                              ElevatedButton.icon(
+                                onPressed: _isUploadingImage ? null : _pickAndUploadImages,
+                                icon: _isUploadingImage
+                                    ? const SizedBox(
+                                        width: 18,
+                                        height: 18,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                        ),
+                                      )
+                                    : const Icon(Icons.photo_library_rounded, size: 20),
+                                label: Text(
+                                  _isUploadingImage
+                                      ? (_uploadStatusText ?? 'Mengunggah...')
+                                      : 'Pilih dari Galeri / Folder',
+                                  style: const TextStyle(fontWeight: FontWeight.bold),
+                                ),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppColors.primary,
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                ),
+                              ),
+                              OutlinedButton.icon(
+                                onPressed: _isUploadingImage ? null : _pickFromCamera,
+                                icon: const Icon(Icons.camera_alt_rounded, size: 20),
+                                label: const Text('Ambil dari Kamera'),
+                                style: OutlinedButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                ),
+                              ),
+                            ],
+                          ),
+
+                          if (_isUploadingImage) ...[
+                            const SizedBox(height: 12),
+                            LinearProgressIndicator(
+                              backgroundColor: isDark ? Colors.white12 : Colors.black12,
+                              valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              _uploadStatusText ?? 'Sedang mengunggah foto...',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontStyle: FontStyle.italic,
+                                color: isDark ? Colors.white70 : Colors.black54,
+                              ),
+                            ),
+                          ],
+
+                          const SizedBox(height: 16),
+                          Row(
+                            children: [
+                              Expanded(child: Divider(color: isDark ? Colors.white24 : Colors.black12)),
+                              Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 12),
+                                child: Text(
+                                  'atau masukkan link manual',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: isDark ? Colors.white54 : Colors.black45,
+                                  ),
+                                ),
+                              ),
+                              Expanded(child: Divider(color: isDark ? Colors.white24 : Colors.black12)),
+                            ],
+                          ),
                           const SizedBox(height: 12),
+
                           Row(
                             children: [
                               Expanded(
@@ -470,7 +843,7 @@ class _RoomFormScreenState extends State<RoomFormScreen> {
                                   decoration: const InputDecoration(
                                     labelText: 'URL Foto atau Path Aset',
                                     hintText: 'Link Google Drive / Unsplash / URL foto...',
-                                    helperText: 'Mendukung Google Drive (pastikan akses file diset "Siapa saja yang memiliki link")',
+                                    helperText: 'Mendukung Google Drive (pastikan akses diset "Siapa saja yang memiliki link")',
                                     helperMaxLines: 2,
                                     border: OutlineInputBorder(),
                                     isDense: true,
