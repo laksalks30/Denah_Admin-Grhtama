@@ -26,7 +26,7 @@ class StorageService {
     }
   }
 
-  /// Memilih banyak foto sekaligus dari Galeri / Folder
+  /// Memilih banyak foto sekaligus dari Galeri / Folder (fallback otomatis jika browser tidak mendukung multi-pilih)
   Future<List<XFile>> pickMultiImages() async {
     try {
       final List<XFile> images = await _picker.pickMultiImage(
@@ -34,10 +34,22 @@ class StorageService {
         maxWidth: 1920,
         maxHeight: 1080,
       );
-      return images;
+      if (images.isNotEmpty) return images;
+      return [];
     } catch (e) {
-      debugPrint('[StorageService] Gagal memilih banyak gambar: $e');
-      rethrow;
+      debugPrint('[StorageService] pickMultiImage gagal atau tidak didukung ($e), fallback ke pickImage single...');
+      try {
+        final single = await _picker.pickImage(
+          source: ImageSource.gallery,
+          imageQuality: 85,
+          maxWidth: 1920,
+          maxHeight: 1080,
+        );
+        if (single != null) return [single];
+      } catch (e2) {
+        debugPrint('[StorageService] Fallback pickImage juga gagal: $e2');
+      }
+      return [];
     }
   }
 

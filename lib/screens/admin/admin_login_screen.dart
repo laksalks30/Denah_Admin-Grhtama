@@ -44,6 +44,19 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
     });
 
     try {
+      final rawInput = _emailController.text.trim();
+      String email = rawInput;
+      // Mendukung input langsung berupa username 'admin' atau tanpa domain @
+      if (!email.contains('@')) {
+        if (email.toLowerCase() == 'admin') {
+          email = 'admin@grhatama.id';
+        } else {
+          email = '$email@grhatama.id';
+        }
+      }
+
+      final password = _passwordController.text.trim();
+
       // Jika Supabase belum dikonfigurasi, izinkan login Mode Demo
       if (!SupabaseConfig.isConfigured) {
         await Future.delayed(const Duration(milliseconds: 300));
@@ -64,8 +77,8 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
       }
 
       await SupabaseService.instance.signInWithPassword(
-        email: _emailController.text.trim(),
-        password: _passwordController.text.trim(),
+        email: email,
+        password: password,
       );
 
       if (mounted) {
@@ -74,8 +87,14 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
         );
       }
     } catch (e) {
+      String msg = e.toString().replaceFirst('Exception: ', '');
+      if (msg.contains('Invalid login credentials') ||
+          msg.contains('invalid_credentials') ||
+          msg.contains('invalid login')) {
+        msg = 'Username / Email atau Password salah.\n\nAkun admin bawaan adalah:\n• Username/Email: admin (atau admin@grhatama.id)\n• Password: Admin111111 (A huruf kapital)';
+      }
       setState(() {
-        _errorMessage = e.toString().replaceFirst('Exception: ', '');
+        _errorMessage = msg;
       });
     } finally {
       if (mounted) {
@@ -215,22 +234,19 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                         const SizedBox(height: 16),
                       ],
 
-                      // Email Field
+                      // Username / Email Field
                       TextFormField(
                         controller: _emailController,
                         keyboardType: TextInputType.emailAddress,
                         decoration: const InputDecoration(
-                          labelText: 'Email Admin',
-                          hintText: 'admin@grhatama.id',
-                          prefixIcon: Icon(Icons.email_outlined),
+                          labelText: 'Username atau Email Admin',
+                          hintText: 'admin atau admin@grhatama.id',
+                          prefixIcon: Icon(Icons.person_outline),
                           border: OutlineInputBorder(),
                         ),
                         validator: (value) {
                           if (value == null || value.trim().isEmpty) {
-                            return 'Email wajib diisi';
-                          }
-                          if (!value.contains('@')) {
-                            return 'Format email tidak valid';
+                            return 'Username atau Email wajib diisi';
                           }
                           return null;
                         },
@@ -265,7 +281,48 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                           return null;
                         },
                       ),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 14),
+
+                      // Tombol Pintas: Isi Otomatis Akun Admin
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: AppColors.primary.withValues(alpha: 0.25)),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.vpn_key_outlined, size: 18, color: AppColors.primary),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'Akun Default: admin / Admin111111',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: isDark ? Colors.white70 : Colors.black87,
+                                ),
+                              ),
+                            ),
+                            TextButton(
+                              onPressed: () {
+                                setState(() {
+                                  _emailController.text = 'admin';
+                                  _passwordController.text = 'Admin111111';
+                                  _errorMessage = null;
+                                });
+                              },
+                              style: TextButton.styleFrom(
+                                visualDensity: VisualDensity.compact,
+                                padding: const EdgeInsets.symmetric(horizontal: 8),
+                              ),
+                              child: const Text('Isi Otomatis', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 18),
 
                       // Tombol Login
                       ElevatedButton(
