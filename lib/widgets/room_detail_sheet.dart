@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/room_model.dart';
 import '../utils/floor_label.dart';
+import '../utils/image_url_resolver.dart';
 
 /// Bottom sheet detail ruangan ala Google Maps.
 /// [onShowOnMap] dipanggil ketika tombol "Lihat di Peta" ditekan.
@@ -289,23 +290,26 @@ class _PhotoSection extends StatelessWidget {
                     borderRadius: BorderRadius.circular(12),
                     child: Stack(
                       children: [
-                        room.images[i].startsWith('http') ||
-                                room.images[i].startsWith('blob:')
-                            ? Image.network(
-                                room.images[i],
-                                width: 225,
-                                height: 165,
-                                fit: BoxFit.cover,
-                                errorBuilder: (_, __, ___) => _photoPlaceholder(),
-                              )
-                            : Image.asset(
-                                room.images[i],
-                                width: 225,
-                                height: 165,
-                                fit: BoxFit.cover,
-                                cacheWidth: 450,
-                                errorBuilder: (_, __, ___) => _photoPlaceholder(),
-                              ),
+                        () {
+                          final imgUrl = resolveImageUrl(room.images[i]);
+                          final isNetwork = imgUrl.startsWith('http') || imgUrl.startsWith('blob:');
+                          return isNetwork
+                              ? Image.network(
+                                  imgUrl,
+                                  width: 225,
+                                  height: 165,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (_, __, ___) => _photoPlaceholder(),
+                                )
+                              : Image.asset(
+                                  imgUrl,
+                                  width: 225,
+                                  height: 165,
+                                  fit: BoxFit.cover,
+                                  cacheWidth: 450,
+                                  errorBuilder: (_, __, ___) => _photoPlaceholder(),
+                                );
+                        }(),
                         // Overlay icon tap hint
                         Positioned(
                           right: 8,
@@ -563,24 +567,27 @@ class _ZoomablePageState extends State<_ZoomablePage> {
         child: Center(
           child: Hero(
             tag: widget.heroTag,
-            child: widget.imagePath.startsWith('http') ||
-                    widget.imagePath.startsWith('blob:')
-                ? Image.network(
-                    widget.imagePath,
-                    fit: BoxFit.contain,
-                    errorBuilder: (_, __, ___) => const Center(
-                      child: Icon(Icons.broken_image_outlined,
-                          color: Colors.white30, size: 48),
-                    ),
-                  )
-                : Image.asset(
-                    widget.imagePath,
-                    fit: BoxFit.contain,
-                    errorBuilder: (_, __, ___) => const Center(
-                      child: Icon(Icons.broken_image_outlined,
-                          color: Colors.white30, size: 48),
-                    ),
-                  ),
+            child: () {
+              final imgUrl = resolveImageUrl(widget.imagePath);
+              final isNetwork = imgUrl.startsWith('http') || imgUrl.startsWith('blob:');
+              return isNetwork
+                  ? Image.network(
+                      imgUrl,
+                      fit: BoxFit.contain,
+                      errorBuilder: (_, __, ___) => const Center(
+                        child: Icon(Icons.broken_image_outlined,
+                            color: Colors.white30, size: 48),
+                      ),
+                    )
+                  : Image.asset(
+                      imgUrl,
+                      fit: BoxFit.contain,
+                      errorBuilder: (_, __, ___) => const Center(
+                        child: Icon(Icons.broken_image_outlined,
+                            color: Colors.white30, size: 48),
+                      ),
+                    );
+            }(),
           ),
         ),
       ),

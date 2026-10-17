@@ -3,6 +3,7 @@ import '../../main.dart';
 import '../../models/room_model.dart';
 import '../../services/room_repository.dart';
 import '../../utils/floor_label.dart';
+import '../../utils/image_url_resolver.dart';
 import 'visual_pin_picker_screen.dart';
 
 class RoomFormScreen extends StatefulWidget {
@@ -210,8 +211,9 @@ class _RoomFormScreenState extends State<RoomFormScreen> {
   }
 
   void _addImageUrl() {
-    final url = _imageUrlController.text.trim();
-    if (url.isNotEmpty) {
+    final rawUrl = _imageUrlController.text.trim();
+    if (rawUrl.isNotEmpty) {
+      final url = resolveImageUrl(rawUrl);
       setState(() {
         _images.add(url);
         _imageUrlController.clear();
@@ -467,7 +469,9 @@ class _RoomFormScreenState extends State<RoomFormScreen> {
                                   controller: _imageUrlController,
                                   decoration: const InputDecoration(
                                     labelText: 'URL Foto atau Path Aset',
-                                    hintText: 'https://images.unsplash.com/... atau assets/...',
+                                    hintText: 'Link Google Drive / Unsplash / URL foto...',
+                                    helperText: 'Mendukung Google Drive (pastikan akses file diset "Siapa saja yang memiliki link")',
+                                    helperMaxLines: 2,
                                     border: OutlineInputBorder(),
                                     isDense: true,
                                   ),
@@ -493,6 +497,8 @@ class _RoomFormScreenState extends State<RoomFormScreen> {
                               children: _images.asMap().entries.map((entry) {
                                 final index = entry.key;
                                 final img = entry.value;
+                                final resolved = resolveImageUrl(img);
+                                final isNetwork = resolved.startsWith('http') || resolved.startsWith('blob:');
                                 return Stack(
                                   clipBehavior: Clip.none,
                                   children: [
@@ -502,16 +508,16 @@ class _RoomFormScreenState extends State<RoomFormScreen> {
                                         width: 100,
                                         height: 80,
                                         color: isDark ? Colors.white10 : Colors.black12,
-                                        child: img.startsWith('http') || img.startsWith('blob:')
+                                        child: isNetwork
                                             ? Image.network(
-                                                img,
+                                                resolved,
                                                 fit: BoxFit.cover,
                                                 errorBuilder: (_, __, ___) => const Center(
                                                   child: Icon(Icons.broken_image, color: Colors.grey),
                                                 ),
                                               )
                                             : Image.asset(
-                                                img,
+                                                resolved,
                                                 fit: BoxFit.cover,
                                                 errorBuilder: (_, __, ___) => const Center(
                                                   child: Icon(Icons.broken_image, color: Colors.grey),

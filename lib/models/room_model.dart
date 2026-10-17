@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../utils/image_url_resolver.dart';
 
 // 5 Kategori ruangan sesuai legenda denah
 enum RoomCategory {
@@ -97,7 +98,7 @@ class RoomModel {
       category: categoryFromString(map['category'] as String? ?? ''),
       desc: map['description'] as String? ?? (map['desc'] as String? ?? ''),
       images: (map['images'] as List<dynamic>?)
-              ?.map((e) => e.toString())
+              ?.map((e) => resolveImageUrl(e.toString()))
               .toList() ??
           const [],
     );
@@ -113,7 +114,7 @@ class RoomModel {
       'y_ratio': yRatio,
       'category': categoryToString(category),
       'description': desc,
-      'images': images,
+      'images': images.map((e) => resolveImageUrl(e)).toList(),
     };
   }
 
