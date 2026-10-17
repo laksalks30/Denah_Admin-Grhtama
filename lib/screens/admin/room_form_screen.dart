@@ -512,9 +512,22 @@ class _RoomFormScreenState extends State<RoomFormScreen> {
                                             ? Image.network(
                                                 resolved,
                                                 fit: BoxFit.cover,
-                                                errorBuilder: (_, __, ___) => const Center(
-                                                  child: Icon(Icons.broken_image, color: Colors.grey),
-                                                ),
+                                                loadingBuilder: (context, child, progress) {
+                                                  if (progress == null) return child;
+                                                  return const Center(
+                                                    child: SizedBox(
+                                                      width: 20,
+                                                      height: 20,
+                                                      child: CircularProgressIndicator(strokeWidth: 2),
+                                                    ),
+                                                  );
+                                                },
+                                                errorBuilder: (ctx, err, _) {
+                                                  debugPrint('[RoomFormScreen] Gagal memuat $resolved: $err');
+                                                  return const Center(
+                                                    child: Icon(Icons.broken_image, color: Colors.grey),
+                                                  );
+                                                },
                                               )
                                             : Image.asset(
                                                 resolved,

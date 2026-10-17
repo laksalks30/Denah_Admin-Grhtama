@@ -299,7 +299,25 @@ class _PhotoSection extends StatelessWidget {
                                   width: 225,
                                   height: 165,
                                   fit: BoxFit.cover,
-                                  errorBuilder: (_, __, ___) => _photoPlaceholder(),
+                                  loadingBuilder: (context, child, progress) {
+                                    if (progress == null) return child;
+                                    return Container(
+                                      width: 225,
+                                      height: 165,
+                                      color: isDark ? Colors.white10 : Colors.black12,
+                                      child: const Center(
+                                        child: SizedBox(
+                                          width: 24,
+                                          height: 24,
+                                          child: CircularProgressIndicator(strokeWidth: 2),
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                  errorBuilder: (ctx, err, _) {
+                                    debugPrint('[RoomDetailSheet] Gagal memuat $imgUrl: $err');
+                                    return _photoPlaceholder();
+                                  },
                                 )
                               : Image.asset(
                                   imgUrl,
@@ -574,10 +592,19 @@ class _ZoomablePageState extends State<_ZoomablePage> {
                   ? Image.network(
                       imgUrl,
                       fit: BoxFit.contain,
-                      errorBuilder: (_, __, ___) => const Center(
-                        child: Icon(Icons.broken_image_outlined,
-                            color: Colors.white30, size: 48),
-                      ),
+                      loadingBuilder: (context, child, progress) {
+                        if (progress == null) return child;
+                        return const Center(
+                          child: CircularProgressIndicator(color: Colors.white),
+                        );
+                      },
+                      errorBuilder: (ctx, err, _) {
+                        debugPrint('[FullscreenViewer] Gagal memuat $imgUrl: $err');
+                        return const Center(
+                          child: Icon(Icons.broken_image_outlined,
+                              color: Colors.white30, size: 48),
+                        );
+                      },
                     )
                   : Image.asset(
                       imgUrl,
