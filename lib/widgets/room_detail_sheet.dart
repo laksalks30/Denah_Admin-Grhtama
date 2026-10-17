@@ -289,14 +289,23 @@ class _PhotoSection extends StatelessWidget {
                     borderRadius: BorderRadius.circular(12),
                     child: Stack(
                       children: [
-                        Image.asset(
-                          room.images[i],
-                          width: 225,
-                          height: 165,
-                          fit: BoxFit.cover,
-                          cacheWidth: 450,
-                          errorBuilder: (_, __, ___) => _photoPlaceholder(),
-                        ),
+                        room.images[i].startsWith('http') ||
+                                room.images[i].startsWith('blob:')
+                            ? Image.network(
+                                room.images[i],
+                                width: 225,
+                                height: 165,
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, __, ___) => _photoPlaceholder(),
+                              )
+                            : Image.asset(
+                                room.images[i],
+                                width: 225,
+                                height: 165,
+                                fit: BoxFit.cover,
+                                cacheWidth: 450,
+                                errorBuilder: (_, __, ___) => _photoPlaceholder(),
+                              ),
                         // Overlay icon tap hint
                         Positioned(
                           right: 8,
@@ -554,14 +563,24 @@ class _ZoomablePageState extends State<_ZoomablePage> {
         child: Center(
           child: Hero(
             tag: widget.heroTag,
-            child: Image.asset(
-              widget.imagePath,
-              fit: BoxFit.contain,
-              errorBuilder: (_, __, ___) => const Center(
-                child: Icon(Icons.broken_image_outlined,
-                    color: Colors.white30, size: 48),
-              ),
-            ),
+            child: widget.imagePath.startsWith('http') ||
+                    widget.imagePath.startsWith('blob:')
+                ? Image.network(
+                    widget.imagePath,
+                    fit: BoxFit.contain,
+                    errorBuilder: (_, __, ___) => const Center(
+                      child: Icon(Icons.broken_image_outlined,
+                          color: Colors.white30, size: 48),
+                    ),
+                  )
+                : Image.asset(
+                    widget.imagePath,
+                    fit: BoxFit.contain,
+                    errorBuilder: (_, __, ___) => const Center(
+                      child: Icon(Icons.broken_image_outlined,
+                          color: Colors.white30, size: 48),
+                    ),
+                  ),
           ),
         ),
       ),

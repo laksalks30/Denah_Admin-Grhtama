@@ -452,18 +452,26 @@ class _RoomFormScreenState extends State<RoomFormScreen> {
                             'Foto / Galeri Ruangan',
                             style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                           ),
-                          const SizedBox(height: 10),
+                          Text(
+                            'Masukkan URL foto online (misal: https://... dari Google Drive / hosting / Supabase Storage), atau path aset lokal yang sudah tersedia di proyek.',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: isDark ? Colors.white60 : Colors.black54,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
                           Row(
                             children: [
                               Expanded(
                                 child: TextField(
                                   controller: _imageUrlController,
                                   decoration: const InputDecoration(
-                                    labelText: 'URL Foto (atau path aset)',
-                                    hintText: 'https://... atau assets/images/rooms/...',
+                                    labelText: 'URL Foto atau Path Aset',
+                                    hintText: 'https://images.unsplash.com/... atau assets/...',
                                     border: OutlineInputBorder(),
                                     isDense: true,
                                   ),
+                                  onSubmitted: (_) => _addImageUrl(),
                                 ),
                               ),
                               const SizedBox(width: 8),
@@ -472,7 +480,7 @@ class _RoomFormScreenState extends State<RoomFormScreen> {
                                 icon: const Icon(Icons.add, size: 18),
                                 label: const Text('Tambah'),
                                 style: ElevatedButton.styleFrom(
-                                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                                 ),
                               ),
                             ],
@@ -480,20 +488,53 @@ class _RoomFormScreenState extends State<RoomFormScreen> {
                           if (_images.isNotEmpty) ...[
                             const SizedBox(height: 16),
                             Wrap(
-                              spacing: 10,
-                              runSpacing: 10,
+                              spacing: 12,
+                              runSpacing: 12,
                               children: _images.asMap().entries.map((entry) {
                                 final index = entry.key;
                                 final img = entry.value;
-                                return Chip(
-                                  avatar: const Icon(Icons.image, size: 16),
-                                  label: Text(
-                                    img.length > 25 ? '${img.substring(0, 22)}...' : img,
-                                    style: const TextStyle(fontSize: 12),
-                                  ),
-                                  onDeleted: () {
-                                    setState(() => _images.removeAt(index));
-                                  },
+                                return Stack(
+                                  clipBehavior: Clip.none,
+                                  children: [
+                                    ClipRRect(
+                                      borderRadius: BorderRadius.circular(10),
+                                      child: Container(
+                                        width: 100,
+                                        height: 80,
+                                        color: isDark ? Colors.white10 : Colors.black12,
+                                        child: img.startsWith('http') || img.startsWith('blob:')
+                                            ? Image.network(
+                                                img,
+                                                fit: BoxFit.cover,
+                                                errorBuilder: (_, __, ___) => const Center(
+                                                  child: Icon(Icons.broken_image, color: Colors.grey),
+                                                ),
+                                              )
+                                            : Image.asset(
+                                                img,
+                                                fit: BoxFit.cover,
+                                                errorBuilder: (_, __, ___) => const Center(
+                                                  child: Icon(Icons.broken_image, color: Colors.grey),
+                                                ),
+                                              ),
+                                      ),
+                                    ),
+                                    Positioned(
+                                      top: -6,
+                                      right: -6,
+                                      child: GestureDetector(
+                                        onTap: () => setState(() => _images.removeAt(index)),
+                                        child: Container(
+                                          padding: const EdgeInsets.all(4),
+                                          decoration: const BoxDecoration(
+                                            color: Colors.red,
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: const Icon(Icons.close, size: 14, color: Colors.white),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 );
                               }).toList(),
                             ),
