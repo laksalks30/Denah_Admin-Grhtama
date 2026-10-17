@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart' show Clipboard, ClipboardData;
 import '../../main.dart';
 import '../../models/room_model.dart';
 import '../../services/room_repository.dart';
 import '../../services/storage_service.dart';
 import '../../utils/floor_label.dart';
 import '../../utils/image_url_resolver.dart';
+import '../../widgets/app_image_view.dart';
 import 'visual_pin_picker_screen.dart';
 
 class RoomFormScreen extends StatefulWidget {
@@ -227,13 +227,22 @@ class _RoomFormScreenState extends State<RoomFormScreen> {
 
   Future<void> _pickAndUploadImages() async {
     try {
-      // Panggil pemilih file langsung di awal agar gesture user tidak diblokir browser
       final pickedList = await StorageService.instance.pickImagesFromStorage(allowMultiple: true);
-      if (pickedList.isEmpty) return;
+      if (pickedList.isEmpty) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Tidak ada gambar yang dipilih.'),
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
+        return;
+      }
 
       setState(() {
         _isUploadingImage = true;
-        _uploadStatusText = 'Mempersiapkan ${pickedList.length} foto...';
+        _uploadStatusText = 'Menyiapkan ${pickedList.length} foto...';
       });
 
       int successCount = 0;
@@ -241,10 +250,10 @@ class _RoomFormScreenState extends State<RoomFormScreen> {
         final item = pickedList[i];
         if (!mounted) break;
         setState(() {
-          _uploadStatusText = 'Mengunggah (${i + 1}/${pickedList.length})...';
+          _uploadStatusText = 'Menyimpan foto (${i + 1}/${pickedList.length})...';
         });
 
-        final publicUrl = await StorageService.instance.uploadImageBytes(
+        final imageUri = await StorageService.instance.uploadImageBytes(
           bytes: item.bytes,
           originalFileName: item.name,
           roomCode: _codeController.text.trim(),
@@ -252,7 +261,7 @@ class _RoomFormScreenState extends State<RoomFormScreen> {
 
         if (mounted) {
           setState(() {
-            _images.add(publicUrl);
+            _images.add(imageUri);
           });
         }
         successCount++;
@@ -261,29 +270,22 @@ class _RoomFormScreenState extends State<RoomFormScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Berhasil mengunggah $successCount foto ke Supabase Storage.'),
+            content: Text('Berhasil menambahkan $successCount foto.'),
             backgroundColor: Colors.green.shade700,
             duration: const Duration(seconds: 3),
           ),
         );
       }
-    } catch (e) {
-      debugPrint('[RoomFormScreen] Upload error: $e');
+    } catch (e, stack) {
+      debugPrint('[RoomFormScreen] Upload error: $e\n$stack');
       if (!mounted) return;
-      final msg = e.toString();
-      if (msg.contains('BUCKET_NOT_FOUND')) {
-        _showBucketInstructionDialog();
-      } else if (msg.contains('STORAGE_RLS_RESTRICTED')) {
-        _showStorageRlsDialog();
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Gagal mengunggah foto: $e'),
-            backgroundColor: Colors.red.shade700,
-            duration: const Duration(seconds: 4),
-          ),
-        );
-      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Gagal menambahkan foto: $e'),
+          backgroundColor: Colors.red.shade700,
+          duration: const Duration(seconds: 4),
+        ),
+      );
     } finally {
       if (mounted) {
         setState(() {
@@ -297,14 +299,24 @@ class _RoomFormScreenState extends State<RoomFormScreen> {
   Future<void> _pickFromCamera() async {
     try {
       final item = await StorageService.instance.pickImageFromCamera();
-      if (item == null) return;
+      if (item == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Pengambilan foto dibatalkan.'),
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
+        return;
+      }
 
       setState(() {
         _isUploadingImage = true;
-        _uploadStatusText = 'Mengunggah foto kamera...';
+        _uploadStatusText = 'Menyimpan foto kamera...';
       });
 
-      final publicUrl = await StorageService.instance.uploadImageBytes(
+      final imageUri = await StorageService.instance.uploadImageBytes(
         bytes: item.bytes,
         originalFileName: item.name,
         roomCode: _codeController.text.trim(),
@@ -312,36 +324,29 @@ class _RoomFormScreenState extends State<RoomFormScreen> {
 
       if (mounted) {
         setState(() {
-          _images.add(publicUrl);
+          _images.add(imageUri);
         });
       }
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text('Foto kamera berhasil diunggah ke Supabase Storage.'),
+            content: const Text('Foto kamera berhasil ditambahkan.'),
             backgroundColor: Colors.green.shade700,
             duration: const Duration(seconds: 3),
           ),
         );
       }
-    } catch (e) {
-      debugPrint('[RoomFormScreen] Camera upload error: $e');
+    } catch (e, stack) {
+      debugPrint('[RoomFormScreen] Camera upload error: $e\n$stack');
       if (!mounted) return;
-      final msg = e.toString();
-      if (msg.contains('BUCKET_NOT_FOUND')) {
-        _showBucketInstructionDialog();
-      } else if (msg.contains('STORAGE_RLS_RESTRICTED')) {
-        _showStorageRlsDialog();
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Gagal mengambil/mengunggah foto: $e'),
-            backgroundColor: Colors.red.shade700,
-            duration: const Duration(seconds: 4),
-          ),
-        );
-      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Gagal mengambil foto: $e'),
+          backgroundColor: Colors.red.shade700,
+          duration: const Duration(seconds: 4),
+        ),
+      );
     } finally {
       if (mounted) {
         setState(() {
@@ -350,170 +355,6 @@ class _RoomFormScreenState extends State<RoomFormScreen> {
         });
       }
     }
-  }
-
-  void _showBucketInstructionDialog() {
-    const sqlScript = '''-- 1. Buat bucket room-images
-INSERT INTO storage.buckets (id, name, public)
-VALUES ('room-images', 'room-images', true)
-ON CONFLICT (id) DO UPDATE SET public = true;
-
--- 2. Kebijakan akses upload & baca untuk publik
-CREATE POLICY "Allow public all" ON storage.objects
-FOR ALL TO public
-USING (bucket_id = 'room-images')
-WITH CHECK (bucket_id = 'room-images');''';
-
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Row(
-          children: [
-            Icon(Icons.folder_special, color: Colors.amber, size: 28),
-            SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                'Bucket Storage Belum Siap',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-            ),
-          ],
-        ),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Supabase Storage membutuhkan bucket bernama "room-images" agar foto dari galeri atau folder dapat disimpan.',
-                style: TextStyle(fontSize: 13, height: 1.4),
-              ),
-              const SizedBox(height: 12),
-              const Text(
-                'Cara Mengaktifkan (1 Menit):',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-              ),
-              const SizedBox(height: 4),
-              const Text(
-                '1. Buka Supabase Dashboard > SQL Editor\n2. Tempel dan jalankan script SQL berikut:',
-                style: TextStyle(fontSize: 12, height: 1.4),
-              ),
-              const SizedBox(height: 8),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.05),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.black12),
-                ),
-                child: const SelectableText(
-                  sqlScript,
-                  style: TextStyle(fontFamily: 'monospace', fontSize: 11),
-                ),
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          OutlinedButton.icon(
-            icon: const Icon(Icons.copy, size: 16),
-            label: const Text('Salin Script SQL'),
-            onPressed: () {
-              Clipboard.setData(const ClipboardData(text: sqlScript));
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Script SQL disalin! Jalankan di SQL Editor Supabase Anda.'),
-                  backgroundColor: Colors.teal,
-                ),
-              );
-            },
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Tutup'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showStorageRlsDialog() {
-    const sqlScript = '''-- Berikan izin upload dan baca ke storage.objects
-CREATE POLICY "Allow public all" ON storage.objects
-FOR ALL TO public
-USING (bucket_id = 'room-images')
-WITH CHECK (bucket_id = 'room-images');''';
-
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Row(
-          children: [
-            Icon(Icons.lock_outline, color: Colors.redAccent, size: 28),
-            SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                'Izin Upload Ditolak (RLS)',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-            ),
-          ],
-        ),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Supabase Storage memblokir upload karena Row-Level Security (RLS) pada storage.objects belum mengizinkan upload publik.',
-                style: TextStyle(fontSize: 13, height: 1.4),
-              ),
-              const SizedBox(height: 12),
-              const Text(
-                'Solusi: Jalankan SQL ini di SQL Editor Supabase:',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-              ),
-              const SizedBox(height: 8),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.05),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.black12),
-                ),
-                child: const SelectableText(
-                  sqlScript,
-                  style: TextStyle(fontFamily: 'monospace', fontSize: 11),
-                ),
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          OutlinedButton.icon(
-            icon: const Icon(Icons.copy, size: 16),
-            label: const Text('Salin SQL'),
-            onPressed: () {
-              Clipboard.setData(const ClipboardData(text: sqlScript));
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Script SQL disalin! Jalankan di SQL Editor Supabase.'),
-                  backgroundColor: Colors.teal,
-                ),
-              );
-            },
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Tutup'),
-          ),
-        ],
-      ),
-    );
   }
 
   @override
@@ -873,8 +714,6 @@ WITH CHECK (bucket_id = 'room-images');''';
                               children: _images.asMap().entries.map((entry) {
                                 final index = entry.key;
                                 final img = entry.value;
-                                final resolved = resolveImageUrl(img);
-                                final isNetwork = resolved.startsWith('http') || resolved.startsWith('blob:');
                                 return Stack(
                                   clipBehavior: Clip.none,
                                   children: [
@@ -884,34 +723,12 @@ WITH CHECK (bucket_id = 'room-images');''';
                                         width: 100,
                                         height: 80,
                                         color: isDark ? Colors.white10 : Colors.black12,
-                                        child: isNetwork
-                                            ? Image.network(
-                                                resolved,
-                                                fit: BoxFit.cover,
-                                                loadingBuilder: (context, child, progress) {
-                                                  if (progress == null) return child;
-                                                  return const Center(
-                                                    child: SizedBox(
-                                                      width: 20,
-                                                      height: 20,
-                                                      child: CircularProgressIndicator(strokeWidth: 2),
-                                                    ),
-                                                  );
-                                                },
-                                                errorBuilder: (ctx, err, _) {
-                                                  debugPrint('[RoomFormScreen] Gagal memuat $resolved: $err');
-                                                  return const Center(
-                                                    child: Icon(Icons.broken_image, color: Colors.grey),
-                                                  );
-                                                },
-                                              )
-                                            : Image.asset(
-                                                resolved,
-                                                fit: BoxFit.cover,
-                                                errorBuilder: (_, __, ___) => const Center(
-                                                  child: Icon(Icons.broken_image, color: Colors.grey),
-                                                ),
-                                              ),
+                                        child: AppImageView(
+                                          imagePath: img,
+                                          fit: BoxFit.cover,
+                                          width: 100,
+                                          height: 80,
+                                        ),
                                       ),
                                     ),
                                     Positioned(

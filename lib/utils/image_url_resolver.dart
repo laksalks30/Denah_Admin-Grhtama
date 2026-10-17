@@ -4,8 +4,10 @@ String resolveImageUrl(String rawUrl) {
   final trimmed = rawUrl.trim();
   if (trimmed.isEmpty) return trimmed;
 
-  // Jika berupa path asset lokal atau blob data URL
-  if (trimmed.startsWith('assets/') || trimmed.startsWith('blob:')) {
+  // Jika berupa path asset lokal, blob, atau Base64 data URL
+  if (trimmed.startsWith('assets/') ||
+      trimmed.startsWith('blob:') ||
+      trimmed.startsWith('data:image')) {
     return trimmed;
   }
 
