@@ -28,8 +28,12 @@
   <title>Peta Interaktif Grhatama Pustaka</title>
   <link rel="manifest" href="manifest.json">
 
-  <!-- Auto-purge service worker & cache lama secara instan -->
+  <!-- Auto-purge: hapus SEMUA cache lama browser HP secara agresif -->
   <script>
+    // Versi saat ini — jika berbeda dari cache, paksa reload
+    var APP_VERSION = '20261018_v4';
+
+    // 1. Hapus semua Service Worker lama
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.getRegistrations().then(function(regs) {
         for (var i = 0; i < regs.length; i++) {
@@ -37,6 +41,7 @@
         }
       });
     }
+    // 2. Hapus semua Cache Storage (PWA cache)
     if ('caches' in window) {
       caches.keys().then(function(keys) {
         for (var j = 0; j < keys.length; j++) {
@@ -44,6 +49,17 @@
         }
       });
     }
+    // 3. Jika versi cache lama terdeteksi, paksa reload halaman 1x
+    try {
+      var storedVersion = localStorage.getItem('app_version');
+      if (storedVersion !== APP_VERSION) {
+        localStorage.setItem('app_version', APP_VERSION);
+        if (storedVersion !== null) {
+          // Ada versi lama tersimpan — paksa reload tanpa cache
+          window.location.reload();
+        }
+      }
+    } catch(e) {}
   </script>
 
   <!-- Font Playfair Display untuk logo teks -->
@@ -214,6 +230,6 @@
     window.addEventListener('flutter-first-frame', removeLoadingScreen);
   </script>
 
-  <script src="flutter_bootstrap.js?v=20261018_v3" async></script>
+  <script src="flutter_bootstrap.js?v=20261018_v4" async></script>
 </body>
 </html>

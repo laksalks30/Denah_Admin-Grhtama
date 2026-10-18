@@ -6,13 +6,23 @@
   to = "/index.html"
   status = 200
 
+# Force no-cache untuk SEMUA file agar browser HP tidak pernah memuat versi lama
 [[headers]]
-  for = "/flutter_service_worker.js"
+  for = "/*"
   [headers.values]
     cache-control = "no-cache, no-store, must-revalidate"
+    pragma = "no-cache"
+    expires = "0"
 
 [[headers]]
   for = "/index.html"
+  [headers.values]
+    cache-control = "no-cache, no-store, must-revalidate"
+    pragma = "no-cache"
+    expires = "0"
+
+[[headers]]
+  for = "/flutter_bootstrap.js"
   [headers.values]
     cache-control = "no-cache, no-store, must-revalidate"
 
@@ -22,11 +32,6 @@
     cache-control = "no-cache, no-store, must-revalidate"
 
 [[headers]]
-  for = "/*.js"
+  for = "/flutter_service_worker.js"
   [headers.values]
-    cache-control = "no-cache, must-revalidate"
-
-[[headers]]
-  for = "/assets/*"
-  [headers.values]
-    cache-control = "public, max-age=31536000, immutable"
+    cache-control = "no-cache, no-store, must-revalidate"
