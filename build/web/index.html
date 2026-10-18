@@ -28,38 +28,56 @@
   <title>Peta Interaktif Grhatama Pustaka</title>
   <link rel="manifest" href="manifest.json">
 
-  <!-- Auto-purge: hapus SEMUA cache lama browser HP secara agresif -->
+  <!-- Auto-Sync & Cache Purge: Sinkronisasi instan HP & PC -->
   <script>
-    // Versi saat ini — jika berbeda dari cache, paksa reload
-    var APP_VERSION = '20261018_v5';
+    var APP_VERSION = '20261018_v6';
 
-    // 1. Hapus semua Service Worker lama
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.getRegistrations().then(function(regs) {
-        for (var i = 0; i < regs.length; i++) {
-          regs[i].unregister();
-        }
-      });
-    }
-    // 2. Hapus semua Cache Storage (PWA cache)
-    if ('caches' in window) {
-      caches.keys().then(function(keys) {
-        for (var j = 0; j < keys.length; j++) {
-          caches.delete(keys[j]);
-        }
-      });
-    }
-    // 3. Jika versi cache lama terdeteksi, paksa reload halaman 1x
-    try {
-      var storedVersion = localStorage.getItem('app_version');
-      if (storedVersion !== APP_VERSION) {
-        localStorage.setItem('app_version', APP_VERSION);
-        if (storedVersion !== null) {
-          // Ada versi lama tersimpan — paksa reload tanpa cache
-          window.location.reload();
-        }
+    // 1. Hapus Service Worker & Cache Storage lama
+    function purgeCaches() {
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(function(regs) {
+          for (var i = 0; i < regs.length; i++) {
+            regs[i].unregister();
+          }
+        });
       }
-    } catch(e) {}
+      if ('caches' in window) {
+        caches.keys().then(function(keys) {
+          for (var j = 0; j < keys.length; j++) {
+            caches.delete(keys[j]);
+          }
+        });
+      }
+    }
+    purgeCaches();
+
+    // 2. Auto-cek versi terbaru dari server secara berkala
+    function checkLiveVersion() {
+      fetch('version.json?_t=' + Date.now(), { cache: 'no-store' })
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+          if (data && data.version && data.version !== APP_VERSION) {
+            console.log('[AppUpdater] Versi baru terdeteksi (' + data.version + '). Memperbarui...');
+            purgeCaches();
+            try { localStorage.setItem('app_version', data.version); } catch(e) {}
+            window.location.reload();
+          }
+        })
+        .catch(function() {});
+    }
+
+    // Cek saat halaman dimuat
+    checkLiveVersion();
+
+    // Cek setiap kali pengguna kembali membuka tab di HP (visibilitychange)
+    document.addEventListener('visibilitychange', function() {
+      if (document.visibilityState === 'visible') {
+        checkLiveVersion();
+      }
+    });
+
+    // Cek berkala setiap 20 detik jika tab tetap terbuka
+    setInterval(checkLiveVersion, 20000);
   </script>
 
   <!-- Font Playfair Display untuk logo teks -->
@@ -230,6 +248,6 @@
     window.addEventListener('flutter-first-frame', removeLoadingScreen);
   </script>
 
-  <script src="flutter_bootstrap.js?v=20261018_v5" async></script>
+  <script src="flutter_bootstrap.js?v=20261018_v6" async></script>
 </body>
 </html>
