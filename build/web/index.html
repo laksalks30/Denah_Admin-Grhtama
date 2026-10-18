@@ -28,56 +28,15 @@
   <title>Peta Interaktif Grhatama Pustaka</title>
   <link rel="manifest" href="manifest.json">
 
-  <!-- Auto-Sync & Cache Purge: Sinkronisasi instan HP & PC -->
+  <!-- Cache Purge: Hapus Service Worker lama secara aman tanpa reload loop -->
   <script>
-    var APP_VERSION = '20261018_v7';
-
-    // 1. Hapus Service Worker & Cache Storage lama
-    function purgeCaches() {
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.getRegistrations().then(function(regs) {
-          for (var i = 0; i < regs.length; i++) {
-            regs[i].unregister();
-          }
-        });
-      }
-      if ('caches' in window) {
-        caches.keys().then(function(keys) {
-          for (var j = 0; j < keys.length; j++) {
-            caches.delete(keys[j]);
-          }
-        });
-      }
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(function(regs) {
+        for (var i = 0; i < regs.length; i++) {
+          regs[i].unregister();
+        }
+      });
     }
-    purgeCaches();
-
-    // 2. Auto-cek versi terbaru dari server secara berkala
-    function checkLiveVersion() {
-      fetch('sync_version.json?_t=' + Date.now(), { cache: 'no-store' })
-        .then(function(res) { return res.json(); })
-        .then(function(data) {
-          if (data && data.build_id && data.build_id !== APP_VERSION) {
-            console.log('[AppUpdater] Versi baru terdeteksi (' + data.build_id + '). Memperbarui...');
-            purgeCaches();
-            try { localStorage.setItem('app_version', data.build_id); } catch(e) {}
-            window.location.reload();
-          }
-        })
-        .catch(function() {});
-    }
-
-    // Cek saat halaman dimuat
-    checkLiveVersion();
-
-    // Cek setiap kali pengguna kembali membuka tab di HP (visibilitychange)
-    document.addEventListener('visibilitychange', function() {
-      if (document.visibilityState === 'visible') {
-        checkLiveVersion();
-      }
-    });
-
-    // Cek berkala setiap 20 detik jika tab tetap terbuka
-    setInterval(checkLiveVersion, 20000);
   </script>
 
   <!-- heic2any: Converter otomatis format iPhone HEIC/HEIF ke JPEG murni -->
