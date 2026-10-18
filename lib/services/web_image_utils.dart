@@ -11,6 +11,9 @@ class WebPickedFile {
   WebPickedFile({required this.bytes, required this.name});
 }
 
+@JS('convertHeicIfNeeded')
+external JSPromise<web.File> _convertHeicIfNeeded(web.File file);
+
 /// Helper utilitas Web berkecepatan tinggi untuk pemilih file & kompresi gambar kanvas
 class WebImageUtils {
   /// Memilih foto langsung menggunakan HTML5 <input type="file"> resmi browser
@@ -23,7 +26,7 @@ class WebImageUtils {
 
     final input = web.HTMLInputElement()
       ..type = 'file'
-      ..accept = 'image/jpeg,image/png,image/webp,image/jpg'
+      ..accept = 'image/jpeg,image/png,image/webp,image/jpg,.heic,.heif,image/heic,image/heif'
       ..multiple = allowMultiple;
 
     if (isCamera) {
@@ -49,8 +52,16 @@ class WebImageUtils {
 
         if (fileList != null && fileList.length > 0) {
           for (int i = 0; i < fileList.length; i++) {
-            final file = fileList.item(i);
-            if (file != null) {
+            final rawItem = fileList.item(i);
+            if (rawItem != null) {
+              web.File file = rawItem;
+              // Jika format HEIC/HEIF, konversi otomatis ke JPEG lewat heic2any
+              try {
+                file = await _convertHeicIfNeeded(rawItem).toDart;
+              } catch (e) {
+                debugPrint('[WebImageUtils] Konversi HEIC dilewati: $e');
+              }
+
               final reader = web.FileReader();
               final readCompleter = Completer<Uint8List>();
 
