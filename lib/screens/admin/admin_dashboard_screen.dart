@@ -296,11 +296,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                             Colors.purple,
                           ),
                           const SizedBox(width: 12),
-                          if (SupabaseConfig.isConfigured) ...[
+                          if (SupabaseConfig.isConfigured && allRooms.length < 40) ...[
                             OutlinedButton.icon(
                               onPressed: _seedDataToSupabase,
                               icon: const Icon(Icons.cloud_upload_outlined, size: 16),
-                              label: const Text('Migrasi 50+ Data'),
+                              label: const Text('Migrasi Data Bawaan'),
                               style: OutlinedButton.styleFrom(
                                 foregroundColor: AppColors.primary,
                                 visualDensity: VisualDensity.compact,

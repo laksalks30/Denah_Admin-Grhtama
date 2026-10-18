@@ -118,9 +118,28 @@ class RoomRepository {
     isLoadingNotifier.value = true;
     int insertedCount = 0;
     try {
-      final rowsToInsert = masterRoomsData.map((room) => room.toMap()).toList();
+      // Ambil data yang saat ini sudah ada di Supabase untuk menjaga foto yang sudah diunggah
+      final response = await supabase.client!.from('rooms').select('code, images');
+      final Map<String, List<String>> existingPhotosMap = {};
+      for (final item in (response as List)) {
+        if (item is Map<String, dynamic> && item['code'] != null) {
+          final imgs = (item['images'] as List?)?.map((e) => e.toString()).toList() ?? [];
+          if (imgs.isNotEmpty) {
+            existingPhotosMap[item['code'].toString()] = imgs;
+          }
+        }
+      }
+
+      final rowsToInsert = masterRoomsData.map((room) {
+        final existingImgs = existingPhotosMap[room.code];
+        if (existingImgs != null && existingImgs.isNotEmpty) {
+          // Pertahankan foto yang sudah diunggah pengguna!
+          return room.copyWith(images: existingImgs).toMap();
+        }
+        return room.toMap();
+      }).toList();
       
-      // Upsert berdasarkan 'code' agar tidak menduplikasi jika sudah pernah dimigrasi
+      // Upsert berdasarkan 'code' agar tidak menduplikasi
       await supabase.client!
           .from('rooms')
           .upsert(rowsToInsert, onConflict: 'code');
