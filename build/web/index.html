@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <base href="/">
+  <base href="$FLUTTER_BASE_HREF">
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
@@ -53,13 +53,13 @@
 
     // 2. Auto-cek versi terbaru dari server secara berkala
     function checkLiveVersion() {
-      fetch('version.json?_t=' + Date.now(), { cache: 'no-store' })
+      fetch('sync_version.json?_t=' + Date.now(), { cache: 'no-store' })
         .then(function(res) { return res.json(); })
         .then(function(data) {
-          if (data && data.version && data.version !== APP_VERSION) {
-            console.log('[AppUpdater] Versi baru terdeteksi (' + data.version + '). Memperbarui...');
+          if (data && data.build_id && data.build_id !== APP_VERSION) {
+            console.log('[AppUpdater] Versi baru terdeteksi (' + data.build_id + '). Memperbarui...');
             purgeCaches();
-            try { localStorage.setItem('app_version', data.version); } catch(e) {}
+            try { localStorage.setItem('app_version', data.build_id); } catch(e) {}
             window.location.reload();
           }
         })
