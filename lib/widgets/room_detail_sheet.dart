@@ -227,158 +227,379 @@ class _CategoryBadge extends StatelessWidget {
 }
 
 // ── Foto section ──────────────────────────────────────────────────────────────
-class _PhotoSection extends StatelessWidget {
+// ── Foto section (Interactive Carousel Slider) ──────────────────────────────
+class _PhotoSection extends StatefulWidget {
   final RoomModel room;
   final bool isDark;
   const _PhotoSection({required this.room, required this.isDark});
 
-  void _openViewer(BuildContext context, int initialIndex) {
+  @override
+  State<_PhotoSection> createState() => _PhotoSectionState();
+}
+
+class _PhotoSectionState extends State<_PhotoSection> {
+  late final PageController _pageController;
+  int _currentIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController();
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  void _openViewer(int initialIndex) {
     Navigator.of(context).push(
       PageRouteBuilder(
         opaque: false,
         barrierColor: Colors.black,
         barrierDismissible: true,
-        pageBuilder: (_, __, ___) => _PhotoViewerPage(
-          images: room.images,
+        pageBuilder: (context, animation, secondaryAnimation) => _PhotoViewerPage(
+          images: widget.room.images,
           initialIndex: initialIndex,
-          roomName: room.name,
+          roomName: widget.room.name,
         ),
-        transitionsBuilder: (_, anim, __, child) =>
+        transitionsBuilder: (context, anim, secondaryAnimation, child) =>
             FadeTransition(opacity: anim, child: child),
       ),
     );
   }
 
+  void _previousPage() {
+    if (_currentIndex > 0) {
+      _pageController.previousPage(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
+    }
+  }
+
+  void _nextPage() {
+    if (_currentIndex < widget.room.images.length - 1) {
+      _pageController.nextPage(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    if (room.images.isNotEmpty) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Text(
-                'Foto Ruangan',
-                style: TextStyle(
-                  color: isDark ? Colors.white : Colors.black87,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 14,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                '${room.images.length} foto',
-                style: TextStyle(
-                  color: isDark ? Colors.white38 : Colors.black38,
-                  fontSize: 12,
-                ),
-              ),
-            ],
+    final images = widget.room.images;
+    final total = images.length;
+
+    if (total == 0) {
+      return Container(
+        width: double.infinity,
+        height: 140,
+        decoration: BoxDecoration(
+          color: widget.isDark
+              ? Colors.white.withValues(alpha: 0.05)
+              : Colors.black.withValues(alpha: 0.04),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: widget.isDark
+                ? Colors.white10
+                : Colors.black.withValues(alpha: 0.07),
           ),
-          const SizedBox(height: 10),
-          SizedBox(
-            height: 165,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              itemCount: room.images.length,
-              separatorBuilder: (_, __) => const SizedBox(width: 10),
-              itemBuilder: (context, i) => GestureDetector(
-                onTap: () => _openViewer(context, i),
-                child: Hero(
-                  tag: 'photo_${room.code}_$i',
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: Stack(
-                      children: [
-                        AppImageView(
-                          imagePath: room.images[i],
-                          width: 225,
-                          height: 165,
-                          fit: BoxFit.cover,
-                          placeholder: Container(
-                            width: 225,
-                            height: 165,
-                            color: isDark ? Colors.white10 : Colors.black12,
-                            child: const Center(
-                              child: SizedBox(
-                                width: 24,
-                                height: 24,
-                                child: CircularProgressIndicator(strokeWidth: 2),
-                              ),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.add_photo_alternate_outlined,
+                size: 32, color: widget.isDark ? Colors.white24 : Colors.black26),
+            const SizedBox(height: 6),
+            Text(
+              'Foto belum tersedia',
+              style: TextStyle(
+                color: widget.isDark ? Colors.white38 : Colors.black38,
+                fontSize: 13,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Baris Header Foto
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              children: [
+                Text(
+                  'Foto Ruangan',
+                  style: TextStyle(
+                    color: widget.isDark ? Colors.white : Colors.black87,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: widget.room.color.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    '$total foto',
+                    style: TextStyle(
+                      color: widget.room.color,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 11,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            if (total > 1)
+              Text(
+                'Geser untuk foto lain',
+                style: TextStyle(
+                  color: widget.isDark ? Colors.white38 : Colors.black38,
+                  fontSize: 11,
+                ),
+              ),
+          ],
+        ),
+        const SizedBox(height: 10),
+
+        // Slider Container
+        SizedBox(
+          height: 220,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(16),
+            child: Stack(
+              children: [
+                // 1. PageView Slider Utama (Mendukung Geser / Swipe HP & Drag)
+                PageView.builder(
+                  controller: _pageController,
+                  itemCount: total,
+                  onPageChanged: (i) => setState(() => _currentIndex = i),
+                  itemBuilder: (context, i) => GestureDetector(
+                    onTap: () => _openViewer(i),
+                    child: Hero(
+                      tag: 'photo_${widget.room.code}_$i',
+                      child: AppImageView(
+                        imagePath: images[i],
+                        width: double.infinity,
+                        height: 220,
+                        fit: BoxFit.cover,
+                        placeholder: Container(
+                          width: double.infinity,
+                          height: 220,
+                          color: widget.isDark ? Colors.white10 : Colors.black12,
+                          child: const Center(
+                            child: SizedBox(
+                              width: 28,
+                              height: 28,
+                              child: CircularProgressIndicator(strokeWidth: 2),
                             ),
                           ),
-                          errorWidget: _photoPlaceholder(),
                         ),
-                        // Overlay icon tap hint
-                        Positioned(
-                          right: 8,
-                          bottom: 8,
-                          child: Container(
-                            padding: const EdgeInsets.all(5),
-                            decoration: BoxDecoration(
-                              color: Colors.black.withValues(alpha: 0.45),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: const Icon(
-                              Icons.fullscreen_rounded,
-                              color: Colors.white,
-                              size: 16,
-                            ),
+                        errorWidget: Container(
+                          width: double.infinity,
+                          height: 220,
+                          color: widget.isDark ? Colors.white10 : Colors.black12,
+                          child: const Center(
+                            child: Icon(Icons.broken_image_outlined,
+                                color: Colors.white38, size: 36),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+
+                // 2. Gradient Overlay di bawah agar indikator terlihat kontras
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  height: 60,
+                  child: IgnorePointer(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.bottomCenter,
+                          end: Alignment.topCenter,
+                          colors: [
+                            Colors.black.withValues(alpha: 0.65),
+                            Colors.transparent,
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+
+                // 3. Counter Badge (Pojok Kanan Atas)
+                Positioned(
+                  top: 10,
+                  right: 10,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.6),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: Colors.white24, width: 0.8),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.photo_camera_back_outlined,
+                            size: 13, color: Colors.white),
+                        const SizedBox(width: 4),
+                        Text(
+                          '${_currentIndex + 1} / $total',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
                       ],
                     ),
                   ),
                 ),
-              ),
+
+                // 4. Tombol Layar Penuh (Pojok Kiri Atas)
+                Positioned(
+                  top: 10,
+                  left: 10,
+                  child: GestureDetector(
+                    onTap: () => _openViewer(_currentIndex),
+                    child: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.6),
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white24, width: 0.8),
+                      ),
+                      child: const Icon(
+                        Icons.fullscreen_rounded,
+                        color: Colors.white,
+                        size: 18,
+                      ),
+                    ),
+                  ),
+                ),
+
+                // 5. Tombol Panah Kiri (<) untuk PC & HP
+                if (total > 1 && _currentIndex > 0)
+                  Positioned(
+                    left: 8,
+                    top: 0,
+                    bottom: 0,
+                    child: Center(
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: _previousPage,
+                          borderRadius: BorderRadius.circular(20),
+                          child: Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              color: Colors.black.withValues(alpha: 0.55),
+                              shape: BoxShape.circle,
+                              border: Border.all(color: Colors.white24, width: 0.8),
+                            ),
+                            child: const Icon(
+                              Icons.chevron_left_rounded,
+                              color: Colors.white,
+                              size: 24,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+
+                // 6. Tombol Panah Kanan (>) untuk PC & HP
+                if (total > 1 && _currentIndex < total - 1)
+                  Positioned(
+                    right: 8,
+                    top: 0,
+                    bottom: 0,
+                    child: Center(
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: _nextPage,
+                          borderRadius: BorderRadius.circular(20),
+                          child: Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              color: Colors.black.withValues(alpha: 0.55),
+                              shape: BoxShape.circle,
+                              border: Border.all(color: Colors.white24, width: 0.8),
+                            ),
+                            child: const Icon(
+                              Icons.chevron_right_rounded,
+                              color: Colors.white,
+                              size: 24,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+
+                // 7. Dot Indicators di Tengah Bawah
+                if (total > 1)
+                  Positioned(
+                    bottom: 10,
+                    left: 0,
+                    right: 0,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: List.generate(total, (i) {
+                        final active = i == _currentIndex;
+                        return GestureDetector(
+                          onTap: () {
+                            _pageController.animateToPage(
+                              i,
+                              duration: const Duration(milliseconds: 300),
+                              curve: Curves.easeInOut,
+                            );
+                          },
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            margin: const EdgeInsets.symmetric(horizontal: 3),
+                            width: active ? 18 : 6,
+                            height: 6,
+                            decoration: BoxDecoration(
+                              color: active
+                                  ? Colors.white
+                                  : Colors.white.withValues(alpha: 0.4),
+                              borderRadius: BorderRadius.circular(3),
+                              boxShadow: [
+                                if (active)
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.3),
+                                    blurRadius: 2,
+                                  ),
+                              ],
+                            ),
+                          ),
+                        );
+                      }),
+                    ),
+                  ),
+              ],
             ),
           ),
-        ],
-      );
-    }
-
-    return Container(
-      width: double.infinity,
-      height: 140,
-      decoration: BoxDecoration(
-        color: isDark
-            ? Colors.white.withValues(alpha: 0.05)
-            : Colors.black.withValues(alpha: 0.04),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: isDark
-              ? Colors.white10
-              : Colors.black.withValues(alpha: 0.07),
         ),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.add_photo_alternate_outlined,
-              size: 32, color: isDark ? Colors.white24 : Colors.black26),
-          const SizedBox(height: 6),
-          Text(
-            'Foto belum tersedia',
-            style: TextStyle(
-              color: isDark ? Colors.white38 : Colors.black38,
-              fontSize: 13,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _photoPlaceholder() {
-    return Container(
-      width: 225,
-      height: 165,
-      color: isDark
-          ? Colors.white.withValues(alpha: 0.07)
-          : Colors.black.withValues(alpha: 0.05),
-      child: const Center(
-        child: Icon(Icons.broken_image_outlined, color: Colors.white30, size: 32),
-      ),
+      ],
     );
   }
 }
@@ -495,6 +716,70 @@ class _PhotoViewerPageState extends State<_PhotoViewerPage> {
             ),
           ),
 
+          // ── Tombol Navigasi Kiri (<) ──
+          if (total > 1 && _current > 0)
+            Positioned(
+              left: 16,
+              top: 0,
+              bottom: 0,
+              child: Center(
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(24),
+                    onTap: () {
+                      _pageCtrl.previousPage(
+                        duration: const Duration(milliseconds: 250),
+                        curve: Curves.easeInOut,
+                      );
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.55),
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white30, width: 1),
+                      ),
+                      child: const Icon(Icons.chevron_left_rounded,
+                          color: Colors.white, size: 28),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
+          // ── Tombol Navigasi Kanan (>) ──
+          if (total > 1 && _current < total - 1)
+            Positioned(
+              right: 16,
+              top: 0,
+              bottom: 0,
+              child: Center(
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(24),
+                    onTap: () {
+                      _pageCtrl.nextPage(
+                        duration: const Duration(milliseconds: 250),
+                        curve: Curves.easeInOut,
+                      );
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.55),
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white30, width: 1),
+                      ),
+                      child: const Icon(Icons.chevron_right_rounded,
+                          color: Colors.white, size: 28),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
           // ── Dot indicator ──────────────────────────────────────────────
           if (total > 1)
             Positioned(
@@ -555,7 +840,7 @@ class _ZoomablePageState extends State<_ZoomablePage> {
           _ctrl.value = Matrix4.identity();
         } else {
           // Zoom in 2.5x ke tengah
-          final m = Matrix4.identity()..scale(2.5);
+          final m = Matrix4.diagonal3Values(2.5, 2.5, 1.0);
           _ctrl.value = m;
         }
       },
