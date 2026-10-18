@@ -85,8 +85,7 @@ class RoomRepository {
     if (supabase.isReady && supabase.client != null) {
       await supabase.client!
           .from('rooms')
-          .update(room.toMap())
-          .eq('code', room.code);
+          .upsert(room.toMap(), onConflict: 'code');
     }
 
     final index = _rooms.indexWhere((r) => r.code == room.code);

@@ -30,7 +30,16 @@ class WebImageUtils {
       input.setAttribute('capture', 'environment');
     }
 
-    input.style.display = 'none';
+    // Gunakan offscreen positioning, BUKAN display:none agar kompatibel dengan Safari iOS & Android
+    input.style
+      ..position = 'fixed'
+      ..top = '-1000px'
+      ..left = '-1000px'
+      ..opacity = '0'
+      ..width = '1px'
+      ..height = '1px'
+      ..pointerEvents = 'none';
+
     web.document.body?.append(input);
 
     input.onchange = (web.Event _) {
@@ -47,9 +56,12 @@ class WebImageUtils {
 
               reader.onload = (web.Event _) {
                 try {
-                  final arrayBuf = (reader.result as JSArrayBuffer).toDart;
-                  readCompleter.complete(arrayBuf.asUint8List());
+                  final dataUrl = (reader.result as JSString).toDart;
+                  final commaIdx = dataUrl.indexOf(',');
+                  final base64Str = commaIdx != -1 ? dataUrl.substring(commaIdx + 1) : dataUrl;
+                  readCompleter.complete(base64Decode(base64Str));
                 } catch (e) {
+                  debugPrint('[WebImageUtils] Reader parse error: $e');
                   readCompleter.complete(Uint8List(0));
                 }
               }.toJS;
@@ -58,7 +70,7 @@ class WebImageUtils {
                 readCompleter.complete(Uint8List(0));
               }.toJS;
 
-              reader.readAsArrayBuffer(file);
+              reader.readAsDataURL(file);
               final rawBytes = await readCompleter.future;
 
               if (rawBytes.isNotEmpty) {
@@ -96,11 +108,8 @@ class WebImageUtils {
     if (!kIsWeb) return rawBytes;
 
     try {
-      final blob = web.Blob(
-        [rawBytes.toJS].toJS,
-        web.BlobPropertyBag(type: 'image/jpeg'),
-      );
-      final blobUrl = web.URL.createObjectURL(blob);
+      final base64Str = base64Encode(rawBytes);
+      final dataUri = 'data:image/jpeg;base64,$base64Str';
 
       final img = web.HTMLImageElement();
       final completer = Completer<void>();
@@ -113,14 +122,13 @@ class WebImageUtils {
         if (!completer.isCompleted) completer.completeError('Failed to load image');
       }.toJS;
 
-      img.src = blobUrl;
+      img.src = dataUri;
       await completer.future;
 
       int width = img.naturalWidth;
       int height = img.naturalHeight;
 
       if (width <= 0 || height <= 0) {
-        web.URL.revokeObjectURL(blobUrl);
         return rawBytes;
       }
 
@@ -141,19 +149,17 @@ class WebImageUtils {
 
       final ctx = canvas.getContext('2d') as web.CanvasRenderingContext2D?;
       if (ctx == null) {
-        web.URL.revokeObjectURL(blobUrl);
         return rawBytes;
       }
 
       ctx.drawImage(img, 0, 0, width.toDouble(), height.toDouble());
-      web.URL.revokeObjectURL(blobUrl);
 
       // Konversi ke format JPEG dengan kualitas 72%
       final dataUrl = canvas.toDataURL('image/jpeg', quality.toJS);
       final commaIndex = dataUrl.indexOf(',');
-      final base64Str = commaIndex != -1 ? dataUrl.substring(commaIndex + 1) : dataUrl;
+      final cleanBase64 = commaIndex != -1 ? dataUrl.substring(commaIndex + 1) : dataUrl;
 
-      return base64Decode(base64Str);
+      return base64Decode(cleanBase64);
     } catch (e) {
       debugPrint('[WebImageUtils] Kompresi Canvas gagal ($e), gunakan bytes asli');
       return rawBytes;
