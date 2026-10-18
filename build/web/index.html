@@ -9,7 +9,7 @@
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
   <meta name="description" content="Peta interaktif gedung Grhatama Pustaka – Balai Layanan Perpustakaan DPAD DIY. Temukan lokasi ruangan di 3 lantai dengan mudah.">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="theme-color" content="#C62828">
 
   <!-- Open Graph -->
@@ -28,7 +28,7 @@
   <title>Peta Interaktif Grhatama Pustaka</title>
   <link rel="manifest" href="manifest.json">
 
-  <!-- Auto-purge service worker lama di awal sebelum aset lain dimuat -->
+  <!-- Auto-purge service worker & cache lama secara instan -->
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.getRegistrations().then(function(regs) {
@@ -55,25 +55,18 @@
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
     html, body {
-      width: 100%;
-      height: 100%;
       margin: 0;
       padding: 0;
+      width: 100%;
+      height: 100%;
       overflow: hidden;
+      position: fixed;
+      inset: 0;
       background-color: #fafafa;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     }
 
-    flutter-view, flt-glass-pane {
-      position: absolute !important;
-      top: 0 !important;
-      left: 0 !important;
-      width: 100% !important;
-      height: 100% !important;
-      display: block !important;
-    }
-
-    /* Sembunyikan floating badge / Netlify Drawer */
+    /* Sembunyikan floating badge / Netlify Drawer sepenuhnya */
     netlify-drawer,
     #netlify-drawer,
     .netlify-drawer,
@@ -87,31 +80,31 @@
       opacity: 0 !important;
     }
 
+    /* Loading Screen yang bersih dan aman */
     #loading-screen {
       position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
+      inset: 0;
+      width: 100%;
+      height: 100%;
       background-color: #C62828;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 18px;
+      gap: 16px;
       color: white;
       text-align: center;
       padding: 24px;
       z-index: 999999;
-      animation: fadeIn 0.4s ease;
+      transition: opacity 0.3s ease;
+      animation: fadeIn 0.3s ease;
     }
 
     @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(8px); }
-      to   { opacity: 1; transform: translateY(0); }
+      from { opacity: 0; }
+      to   { opacity: 1; }
     }
 
-    /* Logo DPAD dari assets */
     #logo-dpad {
       width: 72px;
       height: 72px;
@@ -119,7 +112,6 @@
       opacity: 0.95;
     }
 
-    /* Fallback SVG gedung kalau gambar belum load */
     #logo-fallback {
       display: none;
       width: 72px;
@@ -145,9 +137,9 @@
 
     #loading-bar-wrap {
       width: 140px;
-      height: 2px;
-      background: rgba(255,255,255,0.2);
-      border-radius: 2px;
+      height: 3px;
+      background: rgba(255,255,255,0.25);
+      border-radius: 3px;
       overflow: hidden;
       margin-top: 6px;
     }
@@ -155,9 +147,9 @@
     #loading-bar {
       height: 100%;
       width: 0%;
-      background: rgba(255,255,255,0.85);
-      border-radius: 2px;
-      transition: width 0.25s ease;
+      background: #ffffff;
+      border-radius: 3px;
+      transition: width 0.2s ease;
     }
   </style>
 </head>
@@ -194,28 +186,34 @@
   </div>
 
   <script>
-    const bar = document.getElementById('loading-bar');
-    let progress = 0;
-    const interval = setInterval(() => {
-      const step = progress < 50 ? 3 : progress < 75 ? 1.5 : 0.4;
-      progress = Math.min(progress + step, 85);
+    var bar = document.getElementById('loading-bar');
+    var progress = 0;
+    var interval = setInterval(function() {
+      progress = Math.min(progress + (progress < 50 ? 5 : 2), 90);
       if (bar) bar.style.width = progress + '%';
-    }, 80);
+    }, 60);
 
-    window.addEventListener('flutter-first-frame', () => {
+    function removeLoadingScreen() {
       clearInterval(interval);
       if (bar) bar.style.width = '100%';
-      setTimeout(() => {
-        const el = document.getElementById('loading-screen');
-        if (el) {
-          el.style.transition = 'opacity 0.3s ease';
-          el.style.opacity = '0';
-          setTimeout(() => el.remove(), 350);
-        }
-      }, 200);
-    });
+      var el = document.getElementById('loading-screen');
+      if (el) {
+        el.style.opacity = '0';
+        setTimeout(function() {
+          if (el && el.parentNode) {
+            el.parentNode.removeChild(el);
+          }
+        }, 300);
+      }
+    }
+
+    // Safety fallback: Pastikan layar loading PASTI lenyap maksimal dalam 2 detik
+    // sehingga browser HP tidak akan pernah tertahan layar merah!
+    setTimeout(removeLoadingScreen, 2000);
+
+    window.addEventListener('flutter-first-frame', removeLoadingScreen);
   </script>
 
-  <script src="flutter_bootstrap.js?v=20261017_update6" async></script>
+  <script src="flutter_bootstrap.js?v=20261018_v2" async></script>
 </body>
 </html>

@@ -396,56 +396,106 @@ class _RoomFormScreenState extends State<RoomFormScreen> {
                             style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                           ),
                           const SizedBox(height: 16),
-                          Row(
-                            children: [
-                              // Kode Ruangan
-                              Expanded(
-                                flex: 2,
-                                child: TextFormField(
-                                  controller: _codeController,
-                                  decoration: const InputDecoration(
-                                    labelText: 'Kode Ruangan *',
-                                    hintText: 'Contoh: 1.15 atau 2.4',
-                                    border: OutlineInputBorder(),
-                                    prefixIcon: Icon(Icons.tag),
-                                  ),
-                                  validator: (v) {
-                                    if (v == null || v.trim().isEmpty) {
-                                      return 'Wajib diisi';
-                                    }
-                                    final trimmed = v.trim();
-                                    if (!isEditing) {
-                                      final existing = RoomRepository.instance.findByCode(trimmed);
-                                      if (existing != null) {
-                                        return 'Kode "$trimmed" sudah ada (${existing.name})';
-                                      }
-                                    }
-                                    return null;
-                                  },
-                                ),
-                              ),
-                              const SizedBox(width: 14),
-                              // Pilihan Lantai
-                              Expanded(
-                                flex: 3,
-                                child: DropdownButtonFormField<int>(
-                                  initialValue: _floor,
-                                  decoration: const InputDecoration(
-                                    labelText: 'Lantai *',
-                                    border: OutlineInputBorder(),
-                                    prefixIcon: Icon(Icons.layers_outlined),
-                                  ),
-                                  items: const [
-                                    DropdownMenuItem(value: 1, child: Text('Lantai Dasar')),
-                                    DropdownMenuItem(value: 2, child: Text('Lantai 1')),
-                                    DropdownMenuItem(value: 3, child: Text('Lantai 2')),
+                          LayoutBuilder(
+                            builder: (context, constraints) {
+                              final isSmall = constraints.maxWidth < 450;
+                              if (isSmall) {
+                                return Column(
+                                  children: [
+                                    TextFormField(
+                                      controller: _codeController,
+                                      decoration: const InputDecoration(
+                                        labelText: 'Kode Ruangan *',
+                                        hintText: 'Contoh: 1.15 atau 2.4',
+                                        border: OutlineInputBorder(),
+                                        prefixIcon: Icon(Icons.tag),
+                                      ),
+                                      validator: (v) {
+                                        if (v == null || v.trim().isEmpty) {
+                                          return 'Wajib diisi';
+                                        }
+                                        final trimmed = v.trim();
+                                        if (!isEditing) {
+                                          final existing = RoomRepository.instance.findByCode(trimmed);
+                                          if (existing != null) {
+                                            return 'Kode "$trimmed" sudah ada (${existing.name})';
+                                          }
+                                        }
+                                        return null;
+                                      },
+                                    ),
+                                    const SizedBox(height: 16),
+                                    DropdownButtonFormField<int>(
+                                      initialValue: _floor,
+                                      decoration: const InputDecoration(
+                                        labelText: 'Lantai *',
+                                        border: OutlineInputBorder(),
+                                        prefixIcon: Icon(Icons.layers_outlined),
+                                      ),
+                                      items: const [
+                                        DropdownMenuItem(value: 1, child: Text('Lantai Dasar')),
+                                        DropdownMenuItem(value: 2, child: Text('Lantai 1')),
+                                        DropdownMenuItem(value: 3, child: Text('Lantai 2')),
+                                      ],
+                                      onChanged: (val) {
+                                        if (val != null) setState(() => _floor = val);
+                                      },
+                                    ),
                                   ],
-                                  onChanged: (val) {
-                                    if (val != null) setState(() => _floor = val);
-                                  },
-                                ),
-                              ),
-                            ],
+                                );
+                              }
+                              return Row(
+                                children: [
+                                  // Kode Ruangan
+                                  Expanded(
+                                    flex: 2,
+                                    child: TextFormField(
+                                      controller: _codeController,
+                                      decoration: const InputDecoration(
+                                        labelText: 'Kode Ruangan *',
+                                        hintText: 'Contoh: 1.15 atau 2.4',
+                                        border: OutlineInputBorder(),
+                                        prefixIcon: Icon(Icons.tag),
+                                      ),
+                                      validator: (v) {
+                                        if (v == null || v.trim().isEmpty) {
+                                          return 'Wajib diisi';
+                                        }
+                                        final trimmed = v.trim();
+                                        if (!isEditing) {
+                                          final existing = RoomRepository.instance.findByCode(trimmed);
+                                          if (existing != null) {
+                                            return 'Kode "$trimmed" sudah ada (${existing.name})';
+                                          }
+                                        }
+                                        return null;
+                                      },
+                                    ),
+                                  ),
+                                  const SizedBox(width: 14),
+                                  // Pilihan Lantai
+                                  Expanded(
+                                    flex: 3,
+                                    child: DropdownButtonFormField<int>(
+                                      initialValue: _floor,
+                                      decoration: const InputDecoration(
+                                        labelText: 'Lantai *',
+                                        border: OutlineInputBorder(),
+                                        prefixIcon: Icon(Icons.layers_outlined),
+                                      ),
+                                      items: const [
+                                        DropdownMenuItem(value: 1, child: Text('Lantai Dasar')),
+                                        DropdownMenuItem(value: 2, child: Text('Lantai 1')),
+                                        DropdownMenuItem(value: 3, child: Text('Lantai 2')),
+                                      ],
+                                      onChanged: (val) {
+                                        if (val != null) setState(() => _floor = val);
+                                      },
+                                    ),
+                                  ),
+                                ],
+                              );
+                            },
                           ),
                           const SizedBox(height: 16),
 
@@ -522,8 +572,11 @@ class _RoomFormScreenState extends State<RoomFormScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          Wrap(
+                            alignment: WrapAlignment.spaceBetween,
+                            crossAxisAlignment: WrapCrossAlignment.center,
+                            spacing: 8,
+                            runSpacing: 8,
                             children: [
                               const Text(
                                 'Posisi Pin di Denah Peta',
