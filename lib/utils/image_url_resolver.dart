@@ -64,8 +64,18 @@ String resolveImageUrl(String rawUrl) {
     return trimmed.replaceAll('dl=0', 'raw=1');
   }
 
-  // 3. iPhone HEIC/HEIF URL (tidak dapat dirender browser secara native)
-  // Konversi otomatis ke JPEG melalui Cloudflare Edge image proxy wsrv.nl
+  // 3. Foto Supabase Storage (room-images):
+  // Diproses melalui Cloudflare Edge image proxy wsrv.nl agar:
+  // - Foto format apapun (termasuk foto iPhone HEIC yang terunggah dengan nama .jpg)
+  //   selalu didecode di server edge dan disajikan sebagai JPEG standar universal.
+  // - Header CORS (Access-Control-Allow-Origin: *) terjamin 100% untuk CanvasKit Skia.
+  // - Caching CDN global agar foto tampil seketika tanpa jeda.
+  if (trimmed.contains('supabase.co/storage/v1/object/public/room-images/')) {
+    final encoded = Uri.encodeComponent(trimmed);
+    return 'https://wsrv.nl/?url=$encoded&output=jpg';
+  }
+
+  // 4. URL gambar lainnya yang berformat HEIC/HEIF
   final lowerUrl = trimmed.toLowerCase();
   if (lowerUrl.contains('.heic') || lowerUrl.contains('.heif')) {
     final encoded = Uri.encodeComponent(trimmed);
