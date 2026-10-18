@@ -23,7 +23,7 @@ class WebImageUtils {
 
     final input = web.HTMLInputElement()
       ..type = 'file'
-      ..accept = 'image/*'
+      ..accept = 'image/jpeg,image/png,image/webp,image/jpg'
       ..multiple = allowMultiple;
 
     if (isCamera) {

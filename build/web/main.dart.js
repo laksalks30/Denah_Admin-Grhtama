@@ -8580,7 +8580,7 @@ n=new A.aR(o,t.lB)
 m=v.G
 l=m.document.createElement("input")
 l.type="file"
-l.accept="image/*"
+l.accept="image/jpeg,image/png,image/webp,image/jpg"
 l.multiple=a
 if(b)l.setAttribute("capture","environment")
 p=l.style
