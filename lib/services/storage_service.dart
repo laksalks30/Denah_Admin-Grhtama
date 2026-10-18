@@ -150,13 +150,9 @@ class StorageService {
 
     // Jika Supabase terhubung, coba unggah ke bucket storage
     if (client != null) {
-      String ext = 'jpg';
-      if (originalFileName.contains('.')) {
-        final rawExt = originalFileName.split('.').last.toLowerCase();
-        ext = rawExt.replaceAll(RegExp(r'[^a-z0-9]'), '');
-        if (ext.isEmpty || ext.length > 5) ext = 'jpg';
-      }
-
+      // Seluruh foto hasil kompresi disimpan dalam format JPEG standar
+      const ext = 'jpg';
+      const contentType = 'image/jpeg';
       final timestamp = DateTime.now().millisecondsSinceEpoch;
       final rand = (DateTime.now().microsecondsSinceEpoch % 10000).toString();
       final prefix = (roomCode != null && roomCode.isNotEmpty)
@@ -164,10 +160,6 @@ class StorageService {
           : 'room_';
       final cleanFileName = '$prefix${timestamp}_$rand.$ext';
       final storagePath = 'photos/$cleanFileName';
-
-      String contentType = 'image/jpeg';
-      if (ext == 'png') contentType = 'image/png';
-      if (ext == 'webp') contentType = 'image/webp';
 
       try {
         await client.storage.from(bucketName).uploadBinary(

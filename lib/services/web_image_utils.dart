@@ -87,7 +87,11 @@ class WebImageUtils {
               if (rawBytes.isNotEmpty) {
                 // Otomatis kompresi langsung ke JPEG resolusi optimal
                 final compressed = await compressToJpeg(rawBytes);
-                results.add(WebPickedFile(bytes: compressed, name: file.name));
+                String cleanName = file.name;
+                if (cleanName.toLowerCase().endsWith('.heic') || cleanName.toLowerCase().endsWith('.heif')) {
+                  cleanName = cleanName.replaceAll(RegExp(r'\.(heic|heif)$', caseSensitive: false), '.jpg');
+                }
+                results.add(WebPickedFile(bytes: compressed, name: cleanName));
               }
             }
           }

@@ -64,5 +64,13 @@ String resolveImageUrl(String rawUrl) {
     return trimmed.replaceAll('dl=0', 'raw=1');
   }
 
+  // 3. iPhone HEIC/HEIF URL (tidak dapat dirender browser secara native)
+  // Konversi otomatis ke JPEG melalui Cloudflare Edge image proxy wsrv.nl
+  final lowerUrl = trimmed.toLowerCase();
+  if (lowerUrl.contains('.heic') || lowerUrl.contains('.heif')) {
+    final encoded = Uri.encodeComponent(trimmed);
+    return 'https://wsrv.nl/?url=$encoded&output=jpg';
+  }
+
   return trimmed;
 }

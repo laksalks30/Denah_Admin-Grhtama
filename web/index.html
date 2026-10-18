@@ -49,13 +49,28 @@
       if (name.endsWith('.heic') || name.endsWith('.heif') || type.indexOf('heic') !== -1 || type.indexOf('heif') !== -1) {
         if (typeof heic2any === 'function') {
           try {
-            var converted = await heic2any({
-              blob: file,
-              toType: 'image/jpeg',
-              quality: 0.75
-            });
+            var converted;
+            try {
+              converted = await heic2any({
+                blob: file,
+                toType: 'image/jpeg',
+                quality: 0.75,
+                multiple: false
+              });
+            } catch(eSingle) {
+              converted = await heic2any({
+                blob: file,
+                toType: 'image/jpeg',
+                quality: 0.75,
+                multiple: true
+              });
+            }
             var finalBlob = Array.isArray(converted) ? converted[0] : converted;
-            return new File([finalBlob], file.name.replace(/\.(heic|heif)$/i, '.jpg'), { type: 'image/jpeg' });
+            var cleanName = (file.name || 'image.jpg').replace(/\.(heic|heif)$/i, '.jpg');
+            if (!cleanName.toLowerCase().endsWith('.jpg') && !cleanName.toLowerCase().endsWith('.jpeg')) {
+              cleanName += '.jpg';
+            }
+            return new File([finalBlob], cleanName, { type: 'image/jpeg' });
           } catch(err) {
             console.warn('[HEIC] Gagal konversi otomatis heic2any:', err);
           }
