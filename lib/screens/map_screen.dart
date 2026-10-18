@@ -199,21 +199,27 @@ class MapScreenState extends State<MapScreen>
             ),
           ),
           const SizedBox(width: 10),
-          const Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'Grhatama Pustaka',
-                style: TextStyle(
-                    fontSize: 14, fontWeight: FontWeight.w700, color: Colors.white),
-              ),
-              Text(
-                'Peta Interaktif',
-                style: TextStyle(
-                    fontSize: 9, color: Colors.white60, fontWeight: FontWeight.w400),
-              ),
-            ],
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Grhatama Pustaka',
+                  style: TextStyle(
+                      fontSize: 14, fontWeight: FontWeight.w700, color: Colors.white),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                Text(
+                  'Peta Interaktif',
+                  style: TextStyle(
+                      fontSize: 9, color: Colors.white60, fontWeight: FontWeight.w400),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -747,7 +753,7 @@ class MapScreenState extends State<MapScreen>
             child: ListView.separated(
               padding: const EdgeInsets.only(bottom: 8),
               itemCount: rooms.length,
-              separatorBuilder: (_, __) =>
+              separatorBuilder: (context, index) =>
                   Divider(height: 1, color: dividerColor, indent: 14),
               itemBuilder: (context, index) {
                 final room  = rooms[index];

@@ -130,6 +130,8 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final isConfigured = SupabaseConfig.isConfigured;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isSmall = screenWidth < 440;
 
     return Scaffold(
       appBar: AppBar(
@@ -141,14 +143,14 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
       ),
       body: Center(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
+          padding: EdgeInsets.all(isSmall ? 14 : 24),
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 440),
             child: Card(
               elevation: 4,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
               child: Padding(
-                padding: const EdgeInsets.all(28),
+                padding: EdgeInsets.all(isSmall ? 18 : 28),
                 child: Form(
                   key: _formKey,
                   child: Column(
@@ -314,7 +316,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(
-                                'Akun Default: admin / Admin111111',
+                                'Akun: admin / Admin111111',
                                 style: TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w600,
@@ -322,7 +324,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                                 ),
                               ),
                             ),
-                            TextButton(
+                            TextButton.icon(
                               onPressed: () {
                                 setState(() {
                                   _emailController.text = 'admin';
@@ -330,11 +332,12 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                                   _errorMessage = null;
                                 });
                               },
+                              icon: const Icon(Icons.flash_on, size: 14),
+                              label: const Text('Isi Otomatis', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
                               style: TextButton.styleFrom(
                                 visualDensity: VisualDensity.compact,
-                                padding: const EdgeInsets.symmetric(horizontal: 8),
+                                padding: const EdgeInsets.symmetric(horizontal: 6),
                               ),
-                              child: const Text('Isi Otomatis', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
                             ),
                           ],
                         ),

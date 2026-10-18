@@ -92,11 +92,19 @@ class _VisualPinPickerScreenState extends State<VisualPinPickerScreen>
       appBar: AppBar(
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            const Text('Atur Titik Pin Denah', style: TextStyle(fontSize: 16)),
+            const Text(
+              'Atur Titik Pin Denah',
+              style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
             Text(
               '${widget.roomCode.isNotEmpty ? widget.roomCode : "Baru"} - ${widget.roomName.isNotEmpty ? widget.roomName : "Ruangan"} (${floorLabelFull(_floor)})',
-              style: const TextStyle(fontSize: 12, color: Colors.white70),
+              style: const TextStyle(fontSize: 11, color: Colors.white70),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ],
         ),
@@ -108,18 +116,24 @@ class _VisualPinPickerScreenState extends State<VisualPinPickerScreen>
               _transformController.value = Matrix4.identity();
             },
           ),
-          ElevatedButton.icon(
-            onPressed: _savePosition,
-            icon: const Icon(Icons.check, size: 18),
-            label: const Text('Gunakan Posisi Ini'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.white,
-              foregroundColor: AppColors.primary,
-              elevation: 0,
-              padding: const EdgeInsets.symmetric(horizontal: 14),
+          Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: ElevatedButton.icon(
+              onPressed: _savePosition,
+              icon: const Icon(Icons.check, size: 17),
+              label: Text(
+                MediaQuery.of(context).size.width < 500 ? 'Simpan' : 'Gunakan Posisi Ini',
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.white,
+                foregroundColor: AppColors.primary,
+                elevation: 0,
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
             ),
           ),
-          const SizedBox(width: 12),
         ],
       ),
       body: Stack(
@@ -285,48 +299,120 @@ class _VisualPinPickerScreenState extends State<VisualPinPickerScreen>
             ),
           ),
 
-          // HUD Petunjuk & Koordinat di Bawah
+          // HUD Petunjuk & Koordinat di Bawah (Responsif untuk HP & Desktop)
           Positioned(
-            bottom: 20,
-            left: 20,
-            right: 20,
+            bottom: 12,
+            left: 12,
+            right: 12,
             child: Center(
-              child: Card(
-                elevation: 6,
-                color: isDark ? const Color(0xFF1E293B) : Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.touch_app, color: AppColors.primary, size: 22),
-                      const SizedBox(width: 12),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Text(
-                            'Klik di mana saja pada denah atau seret pin',
-                            style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
-                          ),
-                          Text(
-                            'Lantai: ${floorLabelFull(_floor)} | xRatio: ${_xRatio.toStringAsFixed(3)} | yRatio: ${_yRatio.toStringAsFixed(3)}',
-                            style: const TextStyle(fontSize: 12, color: AppColors.primary, fontWeight: FontWeight.bold),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(width: 20),
-                      ElevatedButton(
-                        onPressed: _savePosition,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                        ),
-                        child: const Text('Simpan'),
-                      ),
-                    ],
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 620),
+                child: Card(
+                  elevation: 6,
+                  color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        final isCompact = constraints.maxWidth < 460;
+                        if (isCompact) {
+                          return Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              Row(
+                                children: [
+                                  const Icon(Icons.touch_app, color: AppColors.primary, size: 20),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        const Text(
+                                          'Sentuh denah atau geser pin posisi',
+                                          style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                        const SizedBox(height: 1),
+                                        Text(
+                                          'Lt. ${floorLabelFull(_floor)} • X: ${_xRatio.toStringAsFixed(3)} • Y: ${_yRatio.toStringAsFixed(3)}',
+                                          style: const TextStyle(
+                                            fontSize: 11,
+                                            color: AppColors.primary,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              SizedBox(
+                                width: double.infinity,
+                                child: ElevatedButton.icon(
+                                  onPressed: _savePosition,
+                                  icon: const Icon(Icons.check_circle_outline, size: 16),
+                                  label: const Text('Simpan & Gunakan Posisi Ini'),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: AppColors.primary,
+                                    foregroundColor: Colors.white,
+                                    padding: const EdgeInsets.symmetric(vertical: 9),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          );
+                        }
+
+                        // Tampilan Lebar (Desktop/Tablet)
+                        return Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.touch_app, color: AppColors.primary, size: 22),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Text(
+                                    'Klik di mana saja pada denah atau seret pin',
+                                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                                  ),
+                                  Text(
+                                    'Lantai: ${floorLabelFull(_floor)} | xRatio: ${_xRatio.toStringAsFixed(3)} | yRatio: ${_yRatio.toStringAsFixed(3)}',
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      color: AppColors.primary,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            ElevatedButton.icon(
+                              onPressed: _savePosition,
+                              icon: const Icon(Icons.check, size: 16),
+                              label: const Text('Simpan'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.primary,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                              ),
+                            ),
+                          ],
+                        );
+                      },
+                    ),
                   ),
                 ),
               ),

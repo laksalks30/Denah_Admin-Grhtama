@@ -196,6 +196,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           title: Text(
             MediaQuery.of(context).size.width < 500 ? 'Admin Denah' : 'Dashboard Manajemen Denah',
             style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
           leading: IconButton(
             icon: const Icon(Icons.arrow_back),
@@ -631,11 +633,15 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                                               color: isDark ? Colors.white54 : Colors.black45,
                                             ),
                                             const SizedBox(width: 4),
-                                            Text(
-                                              'Pin: (${room.xRatio.toStringAsFixed(3)}, ${room.yRatio.toStringAsFixed(3)})',
-                                              style: TextStyle(
-                                                fontSize: 11,
-                                                color: isDark ? Colors.white54 : Colors.black45,
+                                            Expanded(
+                                              child: Text(
+                                                'Pin: (${room.xRatio.toStringAsFixed(3)}, ${room.yRatio.toStringAsFixed(3)})',
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                                style: TextStyle(
+                                                  fontSize: 11,
+                                                  color: isDark ? Colors.white54 : Colors.black45,
+                                                ),
                                               ),
                                             ),
                                           ],

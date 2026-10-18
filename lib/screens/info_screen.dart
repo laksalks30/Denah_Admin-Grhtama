@@ -102,20 +102,26 @@ class InfoScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 10),
-          const Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'Grhatama Pustaka',
-                style: TextStyle(
-                    fontSize: 14, fontWeight: FontWeight.w700, color: Colors.white),
-              ),
-              Text(
-                'Balai Layanan Perpustakaan DPAD DIY',
-                style: TextStyle(fontSize: 9, color: Colors.white60),
-              ),
-            ],
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Grhatama Pustaka',
+                  style: TextStyle(
+                      fontSize: 14, fontWeight: FontWeight.w700, color: Colors.white),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                Text(
+                  'Balai Layanan Perpustakaan DPAD DIY',
+                  style: TextStyle(fontSize: 9, color: Colors.white60),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
           ),
         ],
       ),

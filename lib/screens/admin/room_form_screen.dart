@@ -363,7 +363,11 @@ class _RoomFormScreenState extends State<RoomFormScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(isEditing ? 'Edit Ruangan (${widget.initialRoom!.code})' : 'Tambah Ruangan Baru'),
+        title: Text(
+          isEditing ? 'Edit Ruangan (${widget.initialRoom!.code})' : 'Tambah Ruangan Baru',
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
         actions: [
           IconButton(
             tooltip: 'Simpan',
@@ -615,7 +619,11 @@ class _RoomFormScreenState extends State<RoomFormScreen> {
                             child: ElevatedButton.icon(
                               onPressed: _openPinPicker,
                               icon: const Icon(Icons.pin_drop),
-                              label: const Text('Buka Peta & Tentukan Posisi Pin (Visual Picker)'),
+                              label: const Text(
+                                'Buka Peta & Tentukan Posisi Pin (Visual Picker)',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(fontWeight: FontWeight.bold),
+                              ),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: AppColors.primary,
                                 foregroundColor: Colors.white,
@@ -732,32 +740,69 @@ class _RoomFormScreenState extends State<RoomFormScreen> {
                           ),
                           const SizedBox(height: 12),
 
-                          Row(
-                            children: [
-                              Expanded(
-                                child: TextField(
-                                  controller: _imageUrlController,
-                                  decoration: const InputDecoration(
-                                    labelText: 'URL Foto atau Path Aset',
-                                    hintText: 'Link Google Drive / Unsplash / URL foto...',
-                                    helperText: 'Mendukung Google Drive (pastikan akses diset "Siapa saja yang memiliki link")',
-                                    helperMaxLines: 2,
-                                    border: OutlineInputBorder(),
-                                    isDense: true,
+                          LayoutBuilder(
+                            builder: (context, constraints) {
+                              final isNarrow = constraints.maxWidth < 360;
+                              if (isNarrow) {
+                                return Column(
+                                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                                  children: [
+                                    TextField(
+                                      controller: _imageUrlController,
+                                      decoration: const InputDecoration(
+                                        labelText: 'URL Foto atau Path Aset',
+                                        hintText: 'Link Google Drive / Unsplash / URL foto...',
+                                        helperText: 'Mendukung Google Drive (pastikan akses diset "Siapa saja yang memiliki link")',
+                                        helperMaxLines: 2,
+                                        border: OutlineInputBorder(),
+                                        isDense: true,
+                                      ),
+                                      onSubmitted: (_) => _addImageUrl(),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    ElevatedButton.icon(
+                                      onPressed: _addImageUrl,
+                                      icon: const Icon(Icons.add, size: 18),
+                                      label: const Text('Tambah URL'),
+                                      style: ElevatedButton.styleFrom(
+                                        padding: const EdgeInsets.symmetric(vertical: 12),
+                                      ),
+                                    ),
+                                  ],
+                                );
+                              }
+                              return Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Expanded(
+                                    child: TextField(
+                                      controller: _imageUrlController,
+                                      decoration: const InputDecoration(
+                                        labelText: 'URL Foto atau Path Aset',
+                                        hintText: 'Link Google Drive / Unsplash / URL foto...',
+                                        helperText: 'Mendukung Google Drive (pastikan akses diset "Siapa saja yang memiliki link")',
+                                        helperMaxLines: 2,
+                                        border: OutlineInputBorder(),
+                                        isDense: true,
+                                      ),
+                                      onSubmitted: (_) => _addImageUrl(),
+                                    ),
                                   ),
-                                  onSubmitted: (_) => _addImageUrl(),
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              ElevatedButton.icon(
-                                onPressed: _addImageUrl,
-                                icon: const Icon(Icons.add, size: 18),
-                                label: const Text('Tambah'),
-                                style: ElevatedButton.styleFrom(
-                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                                ),
-                              ),
-                            ],
+                                  const SizedBox(width: 8),
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 2),
+                                    child: ElevatedButton.icon(
+                                      onPressed: _addImageUrl,
+                                      icon: const Icon(Icons.add, size: 18),
+                                      label: const Text('Tambah'),
+                                      style: ElevatedButton.styleFrom(
+                                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              );
+                            },
                           ),
                           if (_images.isNotEmpty) ...[
                             const SizedBox(height: 16),

@@ -132,6 +132,7 @@ class RoomDetailSheet extends StatelessWidget {
                   // Info chips
                   Wrap(
                     spacing: 8,
+                    runSpacing: 8,
                     children: [
                       _InfoChip(
                         icon: Icons.layers_rounded,
@@ -362,11 +363,14 @@ class _PhotoSectionState extends State<_PhotoSection> {
               ],
             ),
             if (total > 1)
-              Text(
-                'Geser untuk foto lain',
-                style: TextStyle(
-                  color: widget.isDark ? Colors.white38 : Colors.black38,
-                  fontSize: 11,
+              Flexible(
+                child: Text(
+                  'Geser untuk foto lain',
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: widget.isDark ? Colors.white38 : Colors.black38,
+                    fontSize: 11,
+                  ),
                 ),
               ),
           ],
@@ -700,21 +704,6 @@ class _PhotoViewerPageState extends State<_PhotoViewerPage> {
               ),
             ),
 
-          // ── Nama ruangan di bawah ──────────────────────────────────────
-          Positioned(
-            bottom: MediaQuery.of(context).padding.bottom + 20,
-            left: 20,
-            right: 20,
-            child: Text(
-              widget.roomName,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: Colors.white70,
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
 
           // ── Tombol Navigasi Kiri (<) ──
           if (total > 1 && _current > 0)
@@ -780,31 +769,49 @@ class _PhotoViewerPageState extends State<_PhotoViewerPage> {
               ),
             ),
 
-          // ── Dot indicator ──────────────────────────────────────────────
-          if (total > 1)
-            Positioned(
-              bottom: MediaQuery.of(context).padding.bottom + 44,
-              left: 0,
-              right: 0,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(total, (i) {
-                  final active = i == _current;
-                  return AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    margin: const EdgeInsets.symmetric(horizontal: 3),
-                    width: active ? 18 : 6,
-                    height: 6,
-                    decoration: BoxDecoration(
-                      color: active
-                          ? Colors.white
-                          : Colors.white.withValues(alpha: 0.35),
-                      borderRadius: BorderRadius.circular(3),
-                    ),
-                  );
-                }),
-              ),
+          // ── Dot indicator & Nama Ruangan di Bawah ──────────────────────
+          Positioned(
+            bottom: MediaQuery.of(context).padding.bottom + 16,
+            left: 20,
+            right: 20,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (total > 1) ...[
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(total, (i) {
+                      final active = i == _current;
+                      return AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        margin: const EdgeInsets.symmetric(horizontal: 3),
+                        width: active ? 18 : 6,
+                        height: 6,
+                        decoration: BoxDecoration(
+                          color: active
+                              ? Colors.white
+                              : Colors.white.withValues(alpha: 0.35),
+                          borderRadius: BorderRadius.circular(3),
+                        ),
+                      );
+                    }),
+                  ),
+                  const SizedBox(height: 10),
+                ],
+                Text(
+                  widget.roomName,
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Colors.white70,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
             ),
+          ),
         ],
       ),
     );
