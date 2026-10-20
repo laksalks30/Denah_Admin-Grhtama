@@ -13,6 +13,10 @@ String resolveImageUrl(String rawUrl) {
 
   // Jika sudah melalui proxy wsrv.nl
   if (trimmed.startsWith('https://wsrv.nl/')) {
+    final driveMatch = RegExp(r'googleusercontent\.com/d/([a-zA-Z0-9_-]+)').firstMatch(trimmed);
+    if (driveMatch != null) {
+      return 'https://lh3.googleusercontent.com/d/${driveMatch.group(1)}';
+    }
     return trimmed;
   }
 
@@ -50,11 +54,10 @@ String resolveImageUrl(String rawUrl) {
     }
 
     if (fileId != null && fileId.isNotEmpty) {
-      // Menggunakan Cloudflare Edge image proxy wsrv.nl yang menambahkan
-      // header Cross-Origin-Resource-Policy & Access-Control-Allow-Origin: *
-      // sehingga CanvasKit WebGL Skia engine pada Flutter Web dapat membaca
-      // data pixel gambar tanpa terblokir proteksi CORS browser.
-      return 'https://wsrv.nl/?url=https://lh3.googleusercontent.com/d/$fileId';
+      // Direct CDN endpoint Google User Content (lh3.googleusercontent.com/d/<id>)
+      // Menyajikan gambar secara instan sebagai JPEG dengan header Access-Control-Allow-Origin: *
+      // sehingga bebas dari blokir 403 proxy dan kompatibel 100% dengan CanvasKit Flutter Web.
+      return 'https://lh3.googleusercontent.com/d/$fileId';
     }
   }
 
