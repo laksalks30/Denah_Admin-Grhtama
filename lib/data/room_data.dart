@@ -293,7 +293,7 @@ const List<RoomModel> masterRoomsData = [
     category: RoomCategory.koleksi,
     desc: "Pusat informasi dan bantuan layanan perpustakaan.",
     images: [
-      // 'assets/images/rooms/lantai2/2_2_a.jpg',
+      'https://wxxltmmqkdyidtgvibow.supabase.co/storage/v1/object/public/room-images/photos/2_2_a.jpg',
     ],
   ),
   RoomModel(
@@ -317,7 +317,8 @@ const List<RoomModel> masterRoomsData = [
     category: RoomCategory.loker,
     desc: "Fasilitas penitipan barang bawaan pengunjung Lantai 1.",
     images: [
-      // 'assets/images/rooms/lantai2/2_4_a.jpg',
+      'https://wxxltmmqkdyidtgvibow.supabase.co/storage/v1/object/public/room-images/photos/2_4_a.jpg',
+      'https://wxxltmmqkdyidtgvibow.supabase.co/storage/v1/object/public/room-images/photos/2_4_b.jpg',
     ],
   ),
   RoomModel(
@@ -329,8 +330,9 @@ const List<RoomModel> masterRoomsData = [
     category: RoomCategory.pertemuan,
     desc: "Galeri pameran karya seni, literasi, dan kebudayaan.",
     images: [
-      // 'assets/images/rooms/lantai2/2_5_a.jpg',
-      // 'assets/images/rooms/lantai2/2_5_b.jpg',
+      'https://wxxltmmqkdyidtgvibow.supabase.co/storage/v1/object/public/room-images/photos/2_5_a.jpg',
+      'https://wxxltmmqkdyidtgvibow.supabase.co/storage/v1/object/public/room-images/photos/2_5_b.jpg',
+      'https://wxxltmmqkdyidtgvibow.supabase.co/storage/v1/object/public/room-images/photos/2_5_c.jpg',
     ],
   ),
   RoomModel(
@@ -342,8 +344,10 @@ const List<RoomModel> masterRoomsData = [
     category: RoomCategory.koleksi,
     desc: "Koleksi buku ilmu pengetahuan umum dan peminjaman.",
     images: [
-      // 'assets/images/rooms/lantai2/2_6_a.jpg',
-      // 'assets/images/rooms/lantai2/2_6_b.jpg',
+      'https://wxxltmmqkdyidtgvibow.supabase.co/storage/v1/object/public/room-images/photos/2_6_a.jpg',
+      'https://wxxltmmqkdyidtgvibow.supabase.co/storage/v1/object/public/room-images/photos/2_6_b.jpg',
+      'https://wxxltmmqkdyidtgvibow.supabase.co/storage/v1/object/public/room-images/photos/2_6_c.jpg',
+      'https://wxxltmmqkdyidtgvibow.supabase.co/storage/v1/object/public/room-images/photos/2_6_d.jpg',
     ],
   ),
   RoomModel(
@@ -355,7 +359,10 @@ const List<RoomModel> masterRoomsData = [
     category: RoomCategory.koleksi,
     desc: "Area koleksi buku dan layanan baca berhuruf Braille.",
     images: [
-      // 'assets/images/rooms/lantai2/2_7_a.jpg',
+      'https://wxxltmmqkdyidtgvibow.supabase.co/storage/v1/object/public/room-images/photos/2_7_a.jpg',
+      'https://wxxltmmqkdyidtgvibow.supabase.co/storage/v1/object/public/room-images/photos/2_7_b.jpg',
+      'https://wxxltmmqkdyidtgvibow.supabase.co/storage/v1/object/public/room-images/photos/2_7_c.jpg',
+      'https://wxxltmmqkdyidtgvibow.supabase.co/storage/v1/object/public/room-images/photos/2_7_d.jpg',
     ],
   ),
   RoomModel(
@@ -367,7 +374,11 @@ const List<RoomModel> masterRoomsData = [
     category: RoomCategory.cafetaria,
     desc: "Area kantin/tempat bersantai dan membeli makanan minuman.",
     images: [
-      // 'assets/images/rooms/lantai2/2_8_a.jpg',
+      'https://wxxltmmqkdyidtgvibow.supabase.co/storage/v1/object/public/room-images/photos/2_8_a.jpg',
+      'https://wxxltmmqkdyidtgvibow.supabase.co/storage/v1/object/public/room-images/photos/2_8_b.jpg',
+      'https://wxxltmmqkdyidtgvibow.supabase.co/storage/v1/object/public/room-images/photos/2_8_c.jpg',
+      'https://wxxltmmqkdyidtgvibow.supabase.co/storage/v1/object/public/room-images/photos/2_8_d.jpg',
+      'https://wxxltmmqkdyidtgvibow.supabase.co/storage/v1/object/public/room-images/photos/2_8_e.jpg',
     ],
   ),
   RoomModel(
@@ -379,7 +390,8 @@ const List<RoomModel> masterRoomsData = [
     category: RoomCategory.pertemuan,
     desc: "Ruang pertemuan internal dan rapat kerja.",
     images: [
-      // 'assets/images/rooms/lantai2/2_9_a.jpg',
+      'https://wxxltmmqkdyidtgvibow.supabase.co/storage/v1/object/public/room-images/photos/2_9_a.jpg',
+      'https://wxxltmmqkdyidtgvibow.supabase.co/storage/v1/object/public/room-images/photos/2_9_b.jpg',
     ],
   ),
   RoomModel(
@@ -391,7 +403,7 @@ const List<RoomModel> masterRoomsData = [
     category: RoomCategory.kantor,
     desc: "Kantor pimpinan Balai Grhatama Pustaka.",
     images: [
-      // 'assets/images/rooms/lantai2/2_10_a.jpg',
+      'https://wxxltmmqkdyidtgvibow.supabase.co/storage/v1/object/public/room-images/photos/2_10_a.jpg',
     ],
   ),
   RoomModel(
@@ -427,7 +439,7 @@ const List<RoomModel> masterRoomsData = [
     category: RoomCategory.kantor,
     desc: "Kantor administrasi dan operasional staf TU 1.",
     images: [
-      // 'assets/images/rooms/lantai2/2_13_a.jpg',
+      'https://wxxltmmqkdyidtgvibow.supabase.co/storage/v1/object/public/room-images/photos/2_13_a.jpg',
     ],
   ),
   RoomModel(
@@ -439,7 +451,7 @@ const List<RoomModel> masterRoomsData = [
     category: RoomCategory.kantor,
     desc: "Kantor operasional staf TU 2.",
     images: [
-      // 'assets/images/rooms/lantai2/2_14_a.jpg',
+      'https://wxxltmmqkdyidtgvibow.supabase.co/storage/v1/object/public/room-images/photos/2_14_a.jpg',
     ],
   ),
   RoomModel(
@@ -451,8 +463,7 @@ const List<RoomModel> masterRoomsData = [
     category: RoomCategory.pertemuan,
     desc: "Aula serbaguna kapasitas besar untuk pertunjukan dan acara resmi.",
     images: [
-      // 'assets/images/rooms/lantai2/2_15_a.jpg',
-      // 'assets/images/rooms/lantai2/2_15_b.jpg',
+      'https://wxxltmmqkdyidtgvibow.supabase.co/storage/v1/object/public/room-images/photos/2_15_a.jpg',
     ],
   ),
   RoomModel(
@@ -464,7 +475,7 @@ const List<RoomModel> masterRoomsData = [
     category: RoomCategory.kantor,
     desc: "Pusat pengelolaan dokumen dan administrasi persuratan.",
     images: [
-      // 'assets/images/rooms/lantai2/2_16_a.jpg',
+      'https://wxxltmmqkdyidtgvibow.supabase.co/storage/v1/object/public/room-images/photos/2_16_a.jpg',
     ],
   ),
 
