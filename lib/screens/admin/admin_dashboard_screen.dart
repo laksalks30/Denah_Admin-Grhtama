@@ -5,6 +5,7 @@ import '../../services/room_repository.dart';
 import '../../services/supabase_config.dart';
 import '../../services/supabase_service.dart';
 import '../../utils/floor_label.dart';
+import 'admin_login_screen.dart';
 import 'room_form_screen.dart';
 import 'visual_pin_picker_screen.dart';
 
@@ -51,7 +52,13 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     if (confirm == true) {
       await SupabaseService.instance.signOut();
       if (mounted) {
-        Navigator.of(context).pop();
+        if (Navigator.of(context).canPop()) {
+          Navigator.of(context).pop();
+        } else {
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (_) => const AdminLoginScreen()),
+          );
+        }
       }
     }
   }

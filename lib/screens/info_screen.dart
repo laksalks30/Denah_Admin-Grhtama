@@ -3,7 +3,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/services.dart' show Clipboard, ClipboardData;
 import 'package:url_launcher/url_launcher.dart';
 import '../main.dart';
-import 'admin/admin_login_screen.dart';
+
 
 class InfoScreen extends StatelessWidget {
   const InfoScreen({super.key});
@@ -126,17 +126,6 @@ class InfoScreen extends StatelessWidget {
         ],
       ),
       actions: [
-        IconButton(
-          tooltip: 'Portal Admin',
-          icon: const Icon(Icons.admin_panel_settings_outlined, color: Colors.white),
-          onPressed: () {
-            Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (_) => const AdminLoginScreen(),
-              ),
-            );
-          },
-        ),
         IconButton(
           tooltip: isDark ? 'Mode Terang' : 'Mode Gelap',
           icon: AnimatedSwitcher(
@@ -569,27 +558,6 @@ class InfoScreen extends StatelessWidget {
             'Balai Layanan Perpustakaan\nDinas Perpustakaan dan Arsip Daerah\nDaerah Istimewa Yogyakarta',
             textAlign: TextAlign.center,
             style: TextStyle(color: Colors.white60, fontSize: 12, height: 1.6),
-          ),
-          const SizedBox(height: 16),
-          // Tombol Portal Pengelola / Admin
-          OutlinedButton.icon(
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => const AdminLoginScreen(),
-                ),
-              );
-            },
-            icon: const Icon(Icons.admin_panel_settings, size: 16, color: Colors.white70),
-            label: const Text(
-              'Portal Pengelola / Admin',
-              style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600),
-            ),
-            style: OutlinedButton.styleFrom(
-              side: const BorderSide(color: Colors.white30),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            ),
           ),
           const SizedBox(height: 16),
           Container(height: 1, color: Colors.white.withValues(alpha: 0.15)),

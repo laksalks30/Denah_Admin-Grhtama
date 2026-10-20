@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'screens/home_screen.dart';
+import 'screens/admin/admin_login_screen.dart';
+import 'screens/admin/admin_dashboard_screen.dart';
+import 'utils/app_portal_mode.dart';
 import 'services/room_repository.dart';
 import 'services/supabase_service.dart';
 
@@ -62,7 +65,9 @@ class _MyAppState extends State<MyApp> {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Peta Interaktif Grhatama Pustaka',
+      title: AppPortalMode.isAdminPortal
+          ? 'Portal Pengelola - Grhatama Pustaka'
+          : 'Peta Interaktif Grhatama Pustaka',
       themeMode: _themeMode,
 
       // ── LIGHT THEME ──────────────────────────────────────────────────────
@@ -160,7 +165,34 @@ class _MyAppState extends State<MyApp> {
         ),
       ),
 
-      home: const HomeScreen(),
+      home: AppPortalMode.isAdminPortal
+          ? const _AdminPortalRoot()
+          : const HomeScreen(),
+      onGenerateRoute: (settings) {
+        final name = (settings.name ?? '').toLowerCase();
+        if (name == '/admin' ||
+            name == '/portal' ||
+            name.startsWith('/admin') ||
+            name.startsWith('/portal')) {
+          return MaterialPageRoute(
+            builder: (_) => const _AdminPortalRoot(),
+            settings: settings,
+          );
+        }
+        return null;
+      },
     );
+  }
+}
+
+class _AdminPortalRoot extends StatelessWidget {
+  const _AdminPortalRoot();
+
+  @override
+  Widget build(BuildContext context) {
+    if (SupabaseService.instance.isAuthenticated) {
+      return const AdminDashboardScreen();
+    }
+    return const AdminLoginScreen();
   }
 }
