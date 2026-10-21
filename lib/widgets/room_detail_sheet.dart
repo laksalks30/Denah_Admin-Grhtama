@@ -148,6 +148,14 @@ class RoomDetailSheet extends StatelessWidget {
                     ],
                   ),
 
+                  // ── Jadwal ──────────────────────────────────────────────
+                  if (room.schedule.isNotEmpty) ...[
+                    const SizedBox(height: 20),
+                    Divider(color: divider),
+                    const SizedBox(height: 14),
+                    _ScheduleSection(room: room, isDark: isDark),
+                  ],
+
                   // Tombol "Lihat di Peta" — hanya tampil kalau callback ada
                   if (onShowOnMap != null) ...[
                     const SizedBox(height: 22),
@@ -918,6 +926,168 @@ class _InfoChip extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+// ── Jadwal section (publik) ───────────────────────────────────────────────────
+class _ScheduleSection extends StatelessWidget {
+  final RoomModel room;
+  final bool isDark;
+
+  const _ScheduleSection({required this.room, required this.isDark});
+
+  @override
+  Widget build(BuildContext context) {
+    final textPrimary = isDark ? Colors.white : Colors.black87;
+    final textSec     = isDark ? Colors.white60 : Colors.black54;
+    final headerBg    = room.color.withValues(alpha: 0.1);
+    final rowEven     = isDark
+        ? Colors.white.withValues(alpha: 0.04)
+        : Colors.black.withValues(alpha: 0.02);
+    final borderColor = isDark
+        ? Colors.white12
+        : Colors.black.withValues(alpha: 0.08);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Header
+        Row(
+          children: [
+            Icon(Icons.schedule_rounded, size: 16, color: room.color),
+            const SizedBox(width: 8),
+            Text(
+              'Jadwal',
+              style: TextStyle(
+                color: textPrimary,
+                fontWeight: FontWeight.w700,
+                fontSize: 14,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+              decoration: BoxDecoration(
+                color: room.color.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(
+                '${room.schedule.length} sesi',
+                style: TextStyle(
+                  color: room.color,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 11,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+
+        // Tabel jadwal
+        Container(
+          decoration: BoxDecoration(
+            border: Border.all(color: borderColor),
+            borderRadius: BorderRadius.circular(12),
+            color: isDark ? Colors.white.withValues(alpha: 0.03) : Colors.white,
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: Column(
+            children: [
+              // Header tabel
+              Container(
+                color: headerBg,
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+                child: Row(
+                  children: [
+                    SizedBox(
+                      width: 76,
+                      child: Text(
+                        'Hari',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 12,
+                          color: room.color,
+                        ),
+                      ),
+                    ),
+                    SizedBox(
+                      width: 54,
+                      child: Text(
+                        'Jam',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 12,
+                          color: room.color,
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: Text(
+                        'Keterangan',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 12,
+                          color: room.color,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Divider(height: 1),
+
+              // Baris jadwal
+              ...room.schedule.asMap().entries.map((entry) {
+                final i    = entry.key;
+                final item = entry.value;
+                return Container(
+                  color: i.isEven ? rowEven : Colors.transparent,
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 14, vertical: 10),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SizedBox(
+                        width: 76,
+                        child: Text(
+                          item.hari,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: textPrimary,
+                          ),
+                        ),
+                      ),
+                      SizedBox(
+                        width: 54,
+                        child: Text(
+                          item.jam,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: room.color,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        child: Text(
+                          item.keterangan,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: textSec,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

@@ -1,22 +1,20 @@
 import 'package:flutter/material.dart';
 import '../utils/image_url_resolver.dart';
 
-// 5 Kategori ruangan sesuai legenda denah
 enum RoomCategory {
-  loker,       // Loker Penitipan       — teal hijau
-  koleksi,     // Ruang Layanan/Koleksi — amber kuning
-  pertemuan,   // Ruang Pertemuan       — pink gelap
-  kantor,      // Kantor/Administrasi   — biru
-  cafetaria,   // Cafetaria             — pink muda
+  loker,
+  koleksi,
+  pertemuan,
+  kantor,
+  cafetaria,
 }
 
-// Palet 5 warna resmi berdasarkan legenda denah Grhatama Pustaka
 class RoomColors {
-  static const Color loker     = Color(0xFF26A69A); // Teal
-  static const Color koleksi   = Color(0xFFFFA726); // Amber
-  static const Color pertemuan = Color(0xFFC2185B); // Pink gelap (Ruang Pertemuan)
-  static const Color kantor    = Color(0xFF1E88E5); // Biru
-  static const Color cafetaria = Color(0xFFF48FB1); // Pink muda (Cafetaria)
+  static const Color loker     = Color(0xFF26A69A);
+  static const Color koleksi   = Color(0xFFFFA726);
+  static const Color pertemuan = Color(0xFFC2185B);
+  static const Color kantor    = Color(0xFF1E88E5);
+  static const Color cafetaria = Color(0xFFF48FB1);
 
   static Color fromCategory(RoomCategory cat) {
     switch (cat) {
@@ -39,6 +37,42 @@ class RoomColors {
   }
 }
 
+// ── Model satu baris jadwal ───────────────────────────────────────────────────
+class RoomScheduleItem {
+  final String hari;
+  final String jam;
+  final String keterangan;
+
+  const RoomScheduleItem({
+    required this.hari,
+    required this.jam,
+    required this.keterangan,
+  });
+
+  factory RoomScheduleItem.fromMap(Map<String, dynamic> map) {
+    return RoomScheduleItem(
+      hari: map['hari'] as String? ?? '',
+      jam: map['jam'] as String? ?? '',
+      keterangan: map['keterangan'] as String? ?? '',
+    );
+  }
+
+  Map<String, dynamic> toMap() => {
+    'hari': hari,
+    'jam': jam,
+    'keterangan': keterangan,
+  };
+
+  RoomScheduleItem copyWith({String? hari, String? jam, String? keterangan}) {
+    return RoomScheduleItem(
+      hari: hari ?? this.hari,
+      jam: jam ?? this.jam,
+      keterangan: keterangan ?? this.keterangan,
+    );
+  }
+}
+
+// ── Model utama ruangan ───────────────────────────────────────────────────────
 class RoomModel {
   final String? id;
   final String code;
@@ -49,6 +83,7 @@ class RoomModel {
   final RoomCategory category;
   final String desc;
   final List<String> images;
+  final List<RoomScheduleItem> schedule;
 
   const RoomModel({
     this.id,
@@ -60,31 +95,24 @@ class RoomModel {
     required this.category,
     required this.desc,
     this.images = const [],
+    this.schedule = const [],
   });
 
   Color get color => RoomColors.fromCategory(category);
 
   static RoomCategory categoryFromString(String value) {
     switch (value.toLowerCase()) {
-      case 'loker':
-        return RoomCategory.loker;
-      case 'koleksi':
-        return RoomCategory.koleksi;
-      case 'pertemuan':
-        return RoomCategory.pertemuan;
-      case 'kantor':
-        return RoomCategory.kantor;
+      case 'loker':     return RoomCategory.loker;
+      case 'koleksi':   return RoomCategory.koleksi;
+      case 'pertemuan': return RoomCategory.pertemuan;
+      case 'kantor':    return RoomCategory.kantor;
       case 'cafetaria':
-      case 'kafetaria':
-        return RoomCategory.cafetaria;
-      default:
-        return RoomCategory.koleksi;
+      case 'kafetaria': return RoomCategory.cafetaria;
+      default:          return RoomCategory.koleksi;
     }
   }
 
-  static String categoryToString(RoomCategory cat) {
-    return cat.name;
-  }
+  static String categoryToString(RoomCategory cat) => cat.name;
 
   factory RoomModel.fromMap(Map<String, dynamic> map) {
     return RoomModel(
@@ -98,6 +126,10 @@ class RoomModel {
       desc: map['description'] as String? ?? (map['desc'] as String? ?? ''),
       images: (map['images'] as List<dynamic>?)
               ?.map((e) => resolveImageUrl(e.toString()))
+              .toList() ??
+          const [],
+      schedule: (map['schedule'] as List<dynamic>?)
+              ?.map((e) => RoomScheduleItem.fromMap(e as Map<String, dynamic>))
               .toList() ??
           const [],
     );
@@ -114,6 +146,7 @@ class RoomModel {
       'category': categoryToString(category),
       'description': desc,
       'images': images.map((e) => resolveImageUrl(e)).toList(),
+      'schedule': schedule.map((s) => s.toMap()).toList(),
     };
   }
 
@@ -127,6 +160,7 @@ class RoomModel {
     RoomCategory? category,
     String? desc,
     List<String>? images,
+    List<RoomScheduleItem>? schedule,
   }) {
     return RoomModel(
       id: id ?? this.id,
@@ -138,7 +172,7 @@ class RoomModel {
       category: category ?? this.category,
       desc: desc ?? this.desc,
       images: images ?? this.images,
+      schedule: schedule ?? this.schedule,
     );
   }
 }
-

@@ -17,45 +17,55 @@ class InfoScreen extends StatelessWidget {
     final uri = Uri.parse(rawUrl);
     final scheme = uri.scheme.toLowerCase();
 
-    // Di web (termasuk mobile browser): semua scheme pakai platformDefault
-    // Di native app: externalApplication untuk https, platformDefault untuk mailto/tel
-    final mode = kIsWeb
-        ? LaunchMode.platformDefault
-        : (scheme == 'https' || scheme == 'http')
-            ? LaunchMode.externalApplication
-            : LaunchMode.platformDefault;
-
     bool launched = false;
-    try {
-      launched = await launchUrl(uri, mode: mode);
-    } catch (_) {
-      launched = false;
-    }
 
-    // Fallback khusus mailto di web: copy email ke clipboard
-    if (!launched && scheme == 'mailto' && kIsWeb) {
-      await Clipboard.setData(ClipboardData(text: _emailAddr));
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Email disalin ke clipboard: balaiyanpus@jogjaprov.go.id'),
-            backgroundColor: const Color(0xFF1565C0),
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-          ),
+    if (kIsWeb) {
+      // Di web: semua link buka di tab baru
+      try {
+        launched = await launchUrl(
+          uri,
+          mode: LaunchMode.externalApplication,
+          webOnlyWindowName: '_blank',
         );
+      } catch (_) {
+        launched = false;
       }
-      return;
+
+      // Fallback mailto di web: copy email ke clipboard
+      if (!launched && scheme == 'mailto') {
+        await Clipboard.setData(ClipboardData(text: _emailAddr));
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('Email disalin ke clipboard: balaiyanpus@jogjaprov.go.id'),
+              backgroundColor: const Color(0xFF1565C0),
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+          );
+        }
+        return;
+      }
+    } else {
+      // Native app
+      try {
+        launched = await launchUrl(
+          uri,
+          mode: (scheme == 'https' || scheme == 'http')
+              ? LaunchMode.externalApplication
+              : LaunchMode.platformDefault,
+        );
+      } catch (_) {
+        launched = false;
+      }
     }
 
     if (!launched && context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            scheme == 'tel'
-                ? 'Fitur telepon tidak tersedia di perangkat ini.'
-                : 'Tidak bisa membuka link.',
-          ),
+          content: Text(scheme == 'tel'
+              ? 'Fitur telepon tidak tersedia di perangkat ini.'
+              : 'Tidak bisa membuka link.'),
           backgroundColor: AppColors.primary,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),

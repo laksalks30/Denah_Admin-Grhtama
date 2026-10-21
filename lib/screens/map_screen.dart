@@ -124,13 +124,15 @@ class MapScreenState extends State<MapScreen>
         _viewerKey.currentContext?.findRenderObject() as RenderBox?;
     if (viewerBox == null) return;
 
+    // Gunakan ukuran viewer yang sudah di-render saat ini
+    // Ini sudah memperhitungkan apakah panel daftar terbuka atau tertutup
     final viewerSize = viewerBox.size;
 
     // Area yang tersedia untuk gambar setelah padding
     final double availableW = viewerSize.width  - _mapPadding * 2;
     final double availableH = viewerSize.height - _mapPadding * 2;
 
-    // Skala FittedBox contain: seberapa besar gambar asli di-fit ke area tersedia
+    // Skala FittedBox contain
     final double scaleW = availableW / originalWidth;
     final double scaleH = availableH / originalHeight;
     final double fitScale = scaleW < scaleH ? scaleW : scaleH;
@@ -139,17 +141,17 @@ class MapScreenState extends State<MapScreen>
     final double fittedW = originalWidth  * fitScale;
     final double fittedH = originalHeight * fitScale;
 
-    // Offset gambar di dalam viewport (karena Center + Padding)
+    // Offset gambar di dalam viewport (Center + Padding)
     final double imgOffsetX = _mapPadding + (availableW - fittedW) / 2;
     final double imgOffsetY = _mapPadding + (availableH - fittedH) / 2;
 
-    // Koordinat piksel marker dalam ruang viewport (sebelum InteractiveViewer zoom)
+    // Koordinat piksel marker dalam ruang viewport
     final double markerVX = imgOffsetX + room.xRatio * fittedW;
     final double markerVY = imgOffsetY + room.yRatio * fittedH;
 
-    final double finalScale = _focusScale;
+    const double finalScale = _focusScale;
 
-    // Terjemahkan agar marker tepat di tengah viewport setelah zoom
+    // Posisikan marker tepat di tengah viewport
     final double tx = viewerSize.width  / 2 - markerVX * finalScale;
     final double ty = viewerSize.height / 2 - markerVY * finalScale;
 
@@ -191,7 +193,10 @@ class MapScreenState extends State<MapScreen>
 
   void _showDetail(RoomModel room) {
     setState(() => selectedZone = room);
-    _flyToRoom(room);
+    // Tunggu 1 frame agar layout viewer sudah final sebelum fly
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _flyToRoom(room);
+    });
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,

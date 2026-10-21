@@ -30,6 +30,7 @@ class _RoomFormScreenState extends State<RoomFormScreen> {
   late double _yRatio;
   late RoomCategory _category;
   late List<String> _images;
+  late List<RoomScheduleItem> _schedule;
   bool _isLoading = false;
   bool _isUploadingImage = false;
   String? _uploadStatusText;
@@ -49,7 +50,8 @@ class _RoomFormScreenState extends State<RoomFormScreen> {
     _xRatio = r?.xRatio ?? 0.5;
     _yRatio = r?.yRatio ?? 0.5;
     _category = r?.category ?? RoomCategory.koleksi;
-    _images = List.from(r?.images ?? []);
+    _images   = List.from(r?.images   ?? []);
+    _schedule = List.from(r?.schedule ?? []);
   }
 
   @override
@@ -167,6 +169,7 @@ class _RoomFormScreenState extends State<RoomFormScreen> {
         category: _category,
         desc: _descController.text.trim(),
         images: _images,
+        schedule: _schedule,
       );
 
       if (isEditing) {
@@ -853,6 +856,16 @@ class _RoomFormScreenState extends State<RoomFormScreen> {
                       ),
                     ),
                   ),
+                  const SizedBox(height: 20),
+
+                  // ── Card Jadwal ────────────────────────────────────────
+                  _ScheduleCard(
+                    schedule: _schedule,
+                    isDark: isDark,
+                    roomColor: RoomColors.fromCategory(_category),
+                    onChanged: (updated) => setState(() => _schedule = updated),
+                  ),
+
                   const SizedBox(height: 30),
 
                   // Tombol Aksi Simpan
@@ -884,6 +897,379 @@ class _RoomFormScreenState extends State<RoomFormScreen> {
           ),
         ),
       ),
+    );
+  }
+}
+
+// ── Card Kelola Jadwal (Admin) ────────────────────────────────────────────────
+class _ScheduleCard extends StatefulWidget {
+  final List<RoomScheduleItem> schedule;
+  final bool isDark;
+  final Color roomColor;
+  final ValueChanged<List<RoomScheduleItem>> onChanged;
+
+  const _ScheduleCard({
+    required this.schedule,
+    required this.isDark,
+    required this.roomColor,
+    required this.onChanged,
+  });
+
+  @override
+  State<_ScheduleCard> createState() => _ScheduleCardState();
+}
+
+class _ScheduleCardState extends State<_ScheduleCard> {
+  void _addItem() async {
+    final result = await showDialog<RoomScheduleItem>(
+      context: context,
+      builder: (_) => const _ScheduleItemDialog(),
+    );
+    if (result != null) {
+      widget.onChanged([...widget.schedule, result]);
+    }
+  }
+
+  void _editItem(int index) async {
+    final result = await showDialog<RoomScheduleItem>(
+      context: context,
+      builder: (_) => _ScheduleItemDialog(initial: widget.schedule[index]),
+    );
+    if (result != null) {
+      final updated = List<RoomScheduleItem>.from(widget.schedule);
+      updated[index] = result;
+      widget.onChanged(updated);
+    }
+  }
+
+  void _deleteItem(int index) {
+    final updated = List<RoomScheduleItem>.from(widget.schedule)..removeAt(index);
+    widget.onChanged(updated);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark      = widget.isDark;
+    final color       = widget.roomColor;
+    final textPrimary = isDark ? Colors.white : Colors.black87;
+    final textSec     = isDark ? Colors.white60 : Colors.black54;
+    final borderColor = isDark ? Colors.white12 : Colors.black.withValues(alpha: 0.08);
+
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header
+            Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Kelola Jadwal',
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Tambahkan jadwal sesi atau kegiatan ruangan ini.',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: isDark ? Colors.white54 : Colors.black45,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                ElevatedButton.icon(
+                  onPressed: _addItem,
+                  icon: const Icon(Icons.add, size: 16),
+                  label: const Text('Tambah'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: color,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    visualDensity: VisualDensity.compact,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+
+            if (widget.schedule.isEmpty)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 20),
+                decoration: BoxDecoration(
+                  color: isDark ? Colors.white.withValues(alpha: 0.04) : Colors.black.withValues(alpha: 0.02),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: borderColor),
+                ),
+                child: Column(
+                  children: [
+                    Icon(Icons.schedule_outlined, size: 32, color: isDark ? Colors.white24 : Colors.black26),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Belum ada jadwal',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: isDark ? Colors.white38 : Colors.black38,
+                      ),
+                    ),
+                  ],
+                ),
+              )
+            else
+              Container(
+                decoration: BoxDecoration(
+                  border: Border.all(color: borderColor),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                clipBehavior: Clip.antiAlias,
+                child: Column(
+                  children: [
+                    // Header tabel
+                    Container(
+                      color: color.withValues(alpha: 0.1),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      child: Row(
+                        children: [
+                          SizedBox(
+                            width: 70,
+                            child: Text('Hari',
+                                style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                    color: color)),
+                          ),
+                          SizedBox(
+                            width: 52,
+                            child: Text('Jam',
+                                style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                    color: color)),
+                          ),
+                          Expanded(
+                            child: Text('Keterangan',
+                                style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                    color: color)),
+                          ),
+                          const SizedBox(width: 56), // aksi
+                        ],
+                      ),
+                    ),
+                    const Divider(height: 1),
+                    // Baris data
+                    ...widget.schedule.asMap().entries.map((e) {
+                      final i    = e.key;
+                      final item = e.value;
+                      final rowBg = i.isEven
+                          ? (isDark
+                              ? Colors.white.withValues(alpha: 0.03)
+                              : Colors.black.withValues(alpha: 0.015))
+                          : Colors.transparent;
+
+                      return Container(
+                        color: rowBg,
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            SizedBox(
+                              width: 70,
+                              child: Text(item.hari,
+                                  style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                      color: textPrimary)),
+                            ),
+                            SizedBox(
+                              width: 52,
+                              child: Text(item.jam,
+                                  style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                      color: color)),
+                            ),
+                            Expanded(
+                              child: Text(item.keterangan,
+                                  style: TextStyle(fontSize: 12, color: textSec)),
+                            ),
+                            // Tombol edit & hapus
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                IconButton(
+                                  tooltip: 'Edit',
+                                  icon: const Icon(Icons.edit_outlined, size: 17),
+                                  visualDensity: VisualDensity.compact,
+                                  onPressed: () => _editItem(i),
+                                ),
+                                IconButton(
+                                  tooltip: 'Hapus',
+                                  icon: const Icon(Icons.delete_outline,
+                                      size: 17, color: Colors.red),
+                                  visualDensity: VisualDensity.compact,
+                                  onPressed: () => _deleteItem(i),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      );
+                    }),
+                  ],
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── Dialog tambah / edit satu baris jadwal ────────────────────────────────────
+class _ScheduleItemDialog extends StatefulWidget {
+  final RoomScheduleItem? initial;
+  const _ScheduleItemDialog({this.initial});
+
+  @override
+  State<_ScheduleItemDialog> createState() => _ScheduleItemDialogState();
+}
+
+class _ScheduleItemDialogState extends State<_ScheduleItemDialog> {
+  late TextEditingController _hariCtrl;
+  late TextEditingController _jamCtrl;
+  late TextEditingController _ketCtrl;
+  final _formKey = GlobalKey<FormState>();
+
+  // Pilihan hari cepat
+  static const _hariOptions = [
+    'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu',
+    'Senin – Jumat', 'Senin – Sabtu', 'Selasa – Kamis', 'Selasa – Sabtu',
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _hariCtrl = TextEditingController(text: widget.initial?.hari ?? '');
+    _jamCtrl  = TextEditingController(text: widget.initial?.jam  ?? '');
+    _ketCtrl  = TextEditingController(text: widget.initial?.keterangan ?? '');
+  }
+
+  @override
+  void dispose() {
+    _hariCtrl.dispose();
+    _jamCtrl.dispose();
+    _ketCtrl.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    if (!_formKey.currentState!.validate()) return;
+    Navigator.of(context).pop(RoomScheduleItem(
+      hari: _hariCtrl.text.trim(),
+      jam:  _jamCtrl.text.trim(),
+      keterangan: _ketCtrl.text.trim(),
+    ));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isEdit = widget.initial != null;
+
+    return AlertDialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      title: Text(isEdit ? 'Edit Jadwal' : 'Tambah Jadwal',
+          style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
+      contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+      content: Form(
+        key: _formKey,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Hari — bisa pilih dari chip atau ketik bebas
+            TextFormField(
+              controller: _hariCtrl,
+              decoration: const InputDecoration(
+                labelText: 'Hari *',
+                hintText: 'Senin / Senin – Jumat / dst.',
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.calendar_today_outlined),
+              ),
+              validator: (v) =>
+                  (v == null || v.trim().isEmpty) ? 'Wajib diisi' : null,
+            ),
+            const SizedBox(height: 8),
+            // Chip pilihan hari cepat
+            SizedBox(
+              height: 36,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: _hariOptions.length,
+                separatorBuilder: (context, index) => const SizedBox(width: 6),
+                itemBuilder: (_, i) {
+                  final h = _hariOptions[i];
+                  return ActionChip(
+                    label: Text(h, style: const TextStyle(fontSize: 11)),
+                    visualDensity: VisualDensity.compact,
+                    onPressed: () => setState(() => _hariCtrl.text = h),
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 14),
+            // Jam
+            TextFormField(
+              controller: _jamCtrl,
+              decoration: const InputDecoration(
+                labelText: 'Jam *',
+                hintText: '09.00 / 10.00 – 11.30 WIB',
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.access_time_outlined),
+              ),
+              validator: (v) =>
+                  (v == null || v.trim().isEmpty) ? 'Wajib diisi' : null,
+            ),
+            const SizedBox(height: 14),
+            // Keterangan
+            TextFormField(
+              controller: _ketCtrl,
+              decoration: const InputDecoration(
+                labelText: 'Keterangan',
+                hintText: 'Nama film, kegiatan, atau info tambahan',
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.info_outline),
+              ),
+              maxLines: 2,
+            ),
+          ],
+        ),
+      ),
+      actionsPadding: const EdgeInsets.fromLTRB(24, 12, 24, 16),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Batal'),
+        ),
+        ElevatedButton(
+          onPressed: _submit,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.primary,
+            foregroundColor: Colors.white,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          ),
+          child: Text(isEdit ? 'Simpan' : 'Tambahkan'),
+        ),
+      ],
     );
   }
 }
