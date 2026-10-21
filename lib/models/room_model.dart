@@ -48,7 +48,6 @@ class RoomModel {
   final double yRatio;
   final RoomCategory category;
   final String desc;
-  // Slot gambar — isi dengan path asset saat foto tersedia
   final List<String> images;
 
   const RoomModel({

@@ -18,39 +18,32 @@ class SupabaseService {
     }
   }
 
-  /// Inisialisasi Supabase SDK saat aplikasi dibuka
   Future<void> initialize() async {
     if (!SupabaseConfig.isConfigured) {
-      debugPrint('[SupabaseService] Kredensial Supabase belum diisi. Menjalankan mode offline/lokal.');
+      debugPrint('[SupabaseService] Kredensial belum diisi, mode offline.');
       return;
     }
-
     try {
       await Supabase.initialize(
         url: SupabaseConfig.supabaseUrl,
-        anonKey: SupabaseConfig.supabaseAnonKey,
+        publishableKey: SupabaseConfig.supabaseAnonKey,
       );
       _initialized = true;
-      debugPrint('[SupabaseService] Terhubung ke Supabase dengan sukses!');
+      debugPrint('[SupabaseService] Terhubung ke Supabase.');
     } catch (e) {
-      debugPrint('[SupabaseService] Gagal inisialisasi Supabase: $e');
+      debugPrint('[SupabaseService] Gagal inisialisasi: $e');
     }
   }
 
-  /// Cek apakah ada admin yang sedang login
   User? get currentUser => client?.auth.currentUser;
   bool get isAuthenticated => currentUser != null;
 
-  /// Stream perubahan status autentikasi
-  Stream<AuthState>? get authStateChanges => client?.auth.onAuthStateChange;
-
-  /// Login admin dengan email dan password
   Future<AuthResponse> signInWithPassword({
     required String email,
     required String password,
   }) async {
     if (!isReady || client == null) {
-      throw Exception('Supabase belum dikonfigurasi. Harap isi URL dan Anon Key di lib/services/supabase_config.dart');
+      throw Exception('Supabase belum dikonfigurasi.');
     }
     return await client!.auth.signInWithPassword(
       email: email.trim(),
@@ -58,10 +51,7 @@ class SupabaseService {
     );
   }
 
-  /// Logout admin
   Future<void> signOut() async {
-    if (client != null) {
-      await client!.auth.signOut();
-    }
+    if (client != null) await client!.auth.signOut();
   }
 }

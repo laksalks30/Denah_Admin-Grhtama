@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../../main.dart';
 import '../../models/room_model.dart';
 import '../../services/room_repository.dart';
-import '../../services/supabase_config.dart';
 import '../../services/supabase_service.dart';
 import '../../utils/floor_label.dart';
 import 'admin_login_screen.dart';
@@ -10,9 +9,7 @@ import 'room_form_screen.dart';
 import 'visual_pin_picker_screen.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
-  final bool isDemoMode;
-
-  const AdminDashboardScreen({super.key, this.isDemoMode = false});
+  const AdminDashboardScreen({super.key});
 
   @override
   State<AdminDashboardScreen> createState() => _AdminDashboardScreenState();
@@ -59,56 +56,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             MaterialPageRoute(builder: (_) => const AdminLoginScreen()),
           );
         }
-      }
-    }
-  }
-
-  Future<void> _seedDataToSupabase() async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Migrasi Data ke Supabase'),
-        content: const Text(
-          'Tindakan ini akan mengunggah seluruh 50+ data ruangan bawaan dari master data ke tabel "rooms" di Supabase Anda secara otomatis.\n\nLanjutkan?',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Batal'),
-          ),
-          ElevatedButton.icon(
-            icon: const Icon(Icons.cloud_upload),
-            label: const Text('Mulai Migrasi'),
-            onPressed: () => Navigator.of(ctx).pop(true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              foregroundColor: Colors.white,
-            ),
-          ),
-        ],
-      ),
-    );
-
-    if (confirm != true) return;
-
-    try {
-      final count = await RoomRepository.instance.seedInitialData();
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Berhasil mengunggah $count data ruangan ke Supabase!'),
-            backgroundColor: Colors.green,
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Gagal migrasi data: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
       }
     }
   }
@@ -189,7 +136,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final isConnected = SupabaseConfig.isConfigured && SupabaseService.instance.isAuthenticated;
+    final isConnected = SupabaseService.instance.isAuthenticated;
 
     return PopScope(
       canPop: true,
@@ -267,7 +214,17 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             final matchesFloor = _selectedFloorFilter == 0 || r.floor == _selectedFloorFilter;
             final matchesCategory = _selectedCategoryFilter == null || r.category == _selectedCategoryFilter;
             return matchesQuery && matchesFloor && matchesCategory;
-          }).toList();
+          }).toList()
+            ..sort((a, b) {
+              final pa = a.code.split('.');
+              final pb = b.code.split('.');
+              final fa = int.tryParse(pa[0]) ?? 0;
+              final fb = int.tryParse(pb[0]) ?? 0;
+              if (fa != fb) return fa.compareTo(fb);
+              final sa = pa.length > 1 ? (int.tryParse(pa[1]) ?? 0) : 0;
+              final sb = pb.length > 1 ? (int.tryParse(pb[1]) ?? 0) : 0;
+              return sa.compareTo(sb);
+            });
 
           return Column(
             children: [
@@ -303,18 +260,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                             Colors.purple,
                           ),
                           const SizedBox(width: 12),
-                          if (SupabaseConfig.isConfigured && allRooms.length < 40) ...[
-                            OutlinedButton.icon(
-                              onPressed: _seedDataToSupabase,
-                              icon: const Icon(Icons.cloud_upload_outlined, size: 16),
-                              label: const Text('Migrasi Data Bawaan'),
-                              style: OutlinedButton.styleFrom(
-                                foregroundColor: AppColors.primary,
-                                visualDensity: VisualDensity.compact,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                          ],
                           ElevatedButton.icon(
                             onPressed: () {
                               Navigator.of(context).push(

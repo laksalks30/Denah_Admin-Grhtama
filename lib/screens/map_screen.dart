@@ -42,8 +42,24 @@ class MapScreenState extends State<MapScreen>
   static const double _focusScale = 2.2;
 
   String get currentMapAsset => 'assets/images/lantai$currentFloor.png';
-  List<RoomModel> get currentFloorRooms =>
-      RoomRepository.instance.getRoomsByFloor(currentFloor);
+
+  List<RoomModel> get currentFloorRooms {
+    final rooms = RoomRepository.instance.getRoomsByFloor(currentFloor);
+    rooms.sort(_compareRoomCode);
+    return rooms;
+  }
+
+  // Sort numerik: "1.1" < "1.2" < "1.10" (bukan string sort)
+  static int _compareRoomCode(RoomModel a, RoomModel b) {
+    final pa = a.code.split('.');
+    final pb = b.code.split('.');
+    final fa = int.tryParse(pa[0]) ?? 0;
+    final fb = int.tryParse(pb[0]) ?? 0;
+    if (fa != fb) return fa.compareTo(fb);
+    final sa = pa.length > 1 ? (int.tryParse(pa[1]) ?? 0) : 0;
+    final sb = pb.length > 1 ? (int.tryParse(pb[1]) ?? 0) : 0;
+    return sa.compareTo(sb);
+  }
 
   void _onRoomsChanged() {
     if (mounted) setState(() {});
@@ -99,6 +115,9 @@ class MapScreenState extends State<MapScreen>
     _showRoomList ? _panelAnim.forward() : _panelAnim.reverse();
   }
 
+  // Padding yang sama dengan yang dipakai di _buildMapArea → InteractiveViewer child
+  static const double _mapPadding = 12.0;
+
   // ── Smooth fly-to: animasikan TransformationController ke posisi marker ───
   void _flyToRoom(RoomModel room) {
     final RenderBox? viewerBox =
@@ -107,23 +126,36 @@ class MapScreenState extends State<MapScreen>
 
     final viewerSize = viewerBox.size;
 
-    // Hitung Matrix4 target: scale ke _focusScale, posisikan marker di tengah viewport
-    final double targetX = room.xRatio * originalWidth;
-    final double targetY = room.yRatio * originalHeight;
+    // Area yang tersedia untuk gambar setelah padding
+    final double availableW = viewerSize.width  - _mapPadding * 2;
+    final double availableH = viewerSize.height - _mapPadding * 2;
 
-    // Seberapa besar gambar di-fit ke viewer (FittedBox contain)
-    final double fitScale = (viewerSize.width / originalWidth)
-        .clamp(0.0, viewerSize.height / originalHeight);
+    // Skala FittedBox contain: seberapa besar gambar asli di-fit ke area tersedia
+    final double scaleW = availableW / originalWidth;
+    final double scaleH = availableH / originalHeight;
+    final double fitScale = scaleW < scaleH ? scaleW : scaleH;
+
+    // Ukuran gambar setelah di-fit
+    final double fittedW = originalWidth  * fitScale;
+    final double fittedH = originalHeight * fitScale;
+
+    // Offset gambar di dalam viewport (karena Center + Padding)
+    final double imgOffsetX = _mapPadding + (availableW - fittedW) / 2;
+    final double imgOffsetY = _mapPadding + (availableH - fittedH) / 2;
+
+    // Koordinat piksel marker dalam ruang viewport (sebelum InteractiveViewer zoom)
+    final double markerVX = imgOffsetX + room.xRatio * fittedW;
+    final double markerVY = imgOffsetY + room.yRatio * fittedH;
 
     final double finalScale = _focusScale;
 
-    // Terjemahkan agar titik (targetX, targetY) ada di tengah viewport
-    final double tx = viewerSize.width  / 2 - targetX * fitScale * finalScale;
-    final double ty = viewerSize.height / 2 - targetY * fitScale * finalScale;
+    // Terjemahkan agar marker tepat di tengah viewport setelah zoom
+    final double tx = viewerSize.width  / 2 - markerVX * finalScale;
+    final double ty = viewerSize.height / 2 - markerVY * finalScale;
 
     final Matrix4 target = Matrix4.identity()
-      ..translate(tx, ty)
-      ..scale(finalScale);
+      ..setTranslationRaw(tx, ty, 0)
+      ..scaleByDouble(finalScale, finalScale, 1.0, 1.0);
 
     final Matrix4 start = _transformController.value.clone();
 
@@ -302,7 +334,7 @@ class MapScreenState extends State<MapScreen>
           maxScale: 5.0,
           child: Center(
             child: Padding(
-              padding: const EdgeInsets.all(12.0),
+              padding: const EdgeInsets.all(_mapPadding),
               child: FittedBox(
                 fit: BoxFit.contain,
                 child: SizedBox(

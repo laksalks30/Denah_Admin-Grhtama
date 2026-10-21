@@ -47,11 +47,23 @@ class _RoomListScreenState extends State<RoomListScreen>
     super.dispose();
   }
 
+  // Sort numerik: "1.1" < "1.2" < "1.10"
+  static int _compareRoomCode(RoomModel a, RoomModel b) {
+    final pa = a.code.split('.');
+    final pb = b.code.split('.');
+    final fa = int.tryParse(pa[0]) ?? 0;
+    final fb = int.tryParse(pb[0]) ?? 0;
+    if (fa != fb) return fa.compareTo(fb);
+    final sa = pa.length > 1 ? (int.tryParse(pa[1]) ?? 0) : 0;
+    final sb = pb.length > 1 ? (int.tryParse(pb[1]) ?? 0) : 0;
+    return sa.compareTo(sb);
+  }
+
   List<RoomModel> get _filteredRooms {
     int? floorFilter;
     if (_tabCtrl.index > 0) floorFilter = _tabCtrl.index;
 
-    return RoomRepository.instance.rooms.where((r) {
+    final result = RoomRepository.instance.rooms.where((r) {
       final matchFloor = floorFilter == null || r.floor == floorFilter;
       final matchCat =
           _activeCategory == null || r.category == _activeCategory;
@@ -61,6 +73,9 @@ class _RoomListScreenState extends State<RoomListScreen>
           r.desc.toLowerCase().contains(_query);
       return matchFloor && matchCat && matchQuery;
     }).toList();
+
+    result.sort(_compareRoomCode);
+    return result;
   }
 
   void _openDetail(BuildContext context, RoomModel room) {
