@@ -59,13 +59,21 @@ class RoomRepository {
     roomsNotifier.value = List.unmodifiable(_rooms);
   }
 
-  /// Update ruangan
+  /// Update ruangan — pakai id kalau ada, fallback upsert by code
   Future<void> updateRoom(RoomModel room) async {
-    await _supabase.client!
-        .from('rooms')
-        .upsert(room.toMap(), onConflict: 'code');
+    if (room.id != null) {
+      // Update by primary key — aman meski kode diubah
+      await _supabase.client!
+          .from('rooms')
+          .update(room.toUpdateMap())
+          .eq('id', room.id!);
+    } else {
+      await _supabase.client!
+          .from('rooms')
+          .upsert(room.toMap(), onConflict: 'code');
+    }
 
-    final idx = _rooms.indexWhere((r) => r.code == room.code);
+    final idx = _rooms.indexWhere((r) => r.code == room.code || r.id == room.id);
     if (idx != -1) {
       _rooms[idx] = room;
     } else {

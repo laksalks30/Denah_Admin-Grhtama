@@ -150,6 +150,21 @@ class RoomModel {
     };
   }
 
+  /// Untuk UPDATE by id — tidak include id di body payload
+  Map<String, dynamic> toUpdateMap() {
+    return {
+      'code': code,
+      'name': name,
+      'floor': floor,
+      'x_ratio': xRatio,
+      'y_ratio': yRatio,
+      'category': categoryToString(category),
+      'description': desc,
+      'images': images.map((e) => resolveImageUrl(e)).toList(),
+      'schedule': schedule.map((s) => s.toMap()).toList(),
+    };
+  }
+
   RoomModel copyWith({
     String? id,
     String? code,
