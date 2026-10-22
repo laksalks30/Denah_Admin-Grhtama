@@ -447,7 +447,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                         ),
                       )
                     : ListView.separated(
-                        padding: const EdgeInsets.all(16),
+                        // Padding bottom 88 = tinggi FAB (56) + margin (16) + extra (16)
+                        // supaya card terakhir tidak tertutup FAB
+                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 88),
                         itemCount: filteredRooms.length,
                         separatorBuilder: (context, index) => const SizedBox(height: 8),
                         itemBuilder: (context, index) {

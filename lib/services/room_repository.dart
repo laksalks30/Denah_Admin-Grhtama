@@ -59,8 +59,10 @@ class RoomRepository {
     roomsNotifier.value = List.unmodifiable(_rooms);
   }
 
-  /// Update ruangan — pakai id kalau ada, fallback upsert by code
-  Future<void> updateRoom(RoomModel room) async {
+  /// Update ruangan — pakai id kalau ada, fallback update by code (bukan upsert)
+  Future<void> updateRoom(RoomModel room, {String? originalCode}) async {
+    final lookupCode = originalCode ?? room.code;
+
     if (room.id != null) {
       // Update by primary key — aman meski kode diubah
       await _supabase.client!
@@ -68,12 +70,18 @@ class RoomRepository {
           .update(room.toUpdateMap())
           .eq('id', room.id!);
     } else {
+      // Fallback: update by original code — TIDAK pakai upsert agar tidak
+      // trigger unique constraint error (rooms_code_key / 23505)
       await _supabase.client!
           .from('rooms')
-          .upsert(room.toMap(), onConflict: 'code');
+          .update(room.toUpdateMap())
+          .eq('code', lookupCode);
     }
 
-    final idx = _rooms.indexWhere((r) => r.code == room.code || r.id == room.id);
+    // Perbarui cache lokal — cari berdasarkan id atau kode LAMA (sebelum edit)
+    final idx = _rooms.indexWhere(
+      (r) => (room.id != null && r.id == room.id) || r.code == lookupCode,
+    );
     if (idx != -1) {
       _rooms[idx] = room;
     } else {

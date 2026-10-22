@@ -173,7 +173,11 @@ class _RoomFormScreenState extends State<RoomFormScreen> {
       );
 
       if (isEditing) {
-        await RoomRepository.instance.updateRoom(room);
+        // Kirim kode asli (sebelum di-edit) sebagai fallback pencarian di DB
+        await RoomRepository.instance.updateRoom(
+          room,
+          originalCode: widget.initialRoom!.code,
+        );
       } else {
         await RoomRepository.instance.addRoom(room);
       }
