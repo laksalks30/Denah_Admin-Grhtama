@@ -22,17 +22,34 @@ class InfoScreen extends StatelessWidget {
     bool launched = false;
 
     if (kIsWeb) {
-      // Di web: gunakan window.open() langsung agar tidak diblokir Chrome popup blocker.
-      // launchUrl dengan externalApplication sering diblokir Chrome untuk mailto: & maps.
+      // Di Chrome, launchUrl dan window.open() sering diblokir untuk mailto: dan
+      // custom scheme. Solusi paling reliable: buat elemen <a> di DOM lalu .click().
+      // Ini dianggap user-initiated gesture oleh semua browser termasuk Chrome.
       try {
-        final result = web.window.open(rawUrl, '_blank');
-        // window.open() return null jika diblokir popup blocker
-        launched = result != null;
+        final anchor = web.document.createElement('a') as web.HTMLAnchorElement;
+        anchor.href = rawUrl;
+        anchor.target = '_blank';
+        anchor.rel = 'noopener noreferrer';
+        // Perlu ditambahkan ke DOM agar Firefox juga mendukungnya
+        web.document.body?.appendChild(anchor);
+        anchor.click();
+        web.document.body?.removeChild(anchor);
+        launched = true;
       } catch (_) {
         launched = false;
       }
 
-      // Fallback mailto di web: copy email ke clipboard
+      // Fallback: window.open() jika anchor trick gagal
+      if (!launched) {
+        try {
+          web.window.open(rawUrl, '_blank');
+          launched = true;
+        } catch (_) {
+          launched = false;
+        }
+      }
+
+      // Last resort untuk mailto: copy email ke clipboard
       if (!launched && scheme == 'mailto') {
         await Clipboard.setData(ClipboardData(text: _emailAddr));
         if (context.mounted) {
@@ -46,19 +63,6 @@ class InfoScreen extends StatelessWidget {
           );
         }
         return;
-      }
-
-      // Fallback umum jika window.open gagal (misal popup blocker ketat)
-      if (!launched) {
-        try {
-          launched = await launchUrl(
-            uri,
-            mode: LaunchMode.externalApplication,
-            webOnlyWindowName: '_blank',
-          );
-        } catch (_) {
-          launched = false;
-        }
       }
     } else {
       // Native app
