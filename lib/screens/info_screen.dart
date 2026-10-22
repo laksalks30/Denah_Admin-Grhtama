@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/services.dart' show Clipboard, ClipboardData;
 import 'package:url_launcher/url_launcher.dart';
+// ignore: avoid_web_libraries_in_flutter
+import 'package:web/web.dart' as web;
 import '../main.dart';
 
 
@@ -20,13 +22,12 @@ class InfoScreen extends StatelessWidget {
     bool launched = false;
 
     if (kIsWeb) {
-      // Di web: semua link buka di tab baru
+      // Di web: gunakan window.open() langsung agar tidak diblokir Chrome popup blocker.
+      // launchUrl dengan externalApplication sering diblokir Chrome untuk mailto: & maps.
       try {
-        launched = await launchUrl(
-          uri,
-          mode: LaunchMode.externalApplication,
-          webOnlyWindowName: '_blank',
-        );
+        final result = web.window.open(rawUrl, '_blank');
+        // window.open() return null jika diblokir popup blocker
+        launched = result != null;
       } catch (_) {
         launched = false;
       }
@@ -45,6 +46,19 @@ class InfoScreen extends StatelessWidget {
           );
         }
         return;
+      }
+
+      // Fallback umum jika window.open gagal (misal popup blocker ketat)
+      if (!launched) {
+        try {
+          launched = await launchUrl(
+            uri,
+            mode: LaunchMode.externalApplication,
+            webOnlyWindowName: '_blank',
+          );
+        } catch (_) {
+          launched = false;
+        }
       }
     } else {
       // Native app
