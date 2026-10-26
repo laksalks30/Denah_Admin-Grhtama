@@ -426,11 +426,14 @@ class _RoomFormScreenState extends State<RoomFormScreen> {
                                           return 'Wajib diisi';
                                         }
                                         final trimmed = v.trim();
-                                        if (!isEditing) {
-                                          final existing = RoomRepository.instance.findByCode(trimmed);
-                                          if (existing != null) {
-                                            return 'Kode "$trimmed" sudah ada (${existing.name})';
-                                          }
+                                        // Saat edit: skip cek duplikat hanya kalau kodenya tidak berubah
+                                        // Kalau kode diubah ke kode lain yang sudah ada, tetap tampilkan error
+                                        if (isEditing && trimmed == widget.initialRoom!.code) {
+                                          return null;
+                                        }
+                                        final existing = RoomRepository.instance.findByCode(trimmed);
+                                        if (existing != null) {
+                                          return 'Kode "$trimmed" sudah ada (${existing.name})';
                                         }
                                         return null;
                                       },
@@ -473,11 +476,14 @@ class _RoomFormScreenState extends State<RoomFormScreen> {
                                           return 'Wajib diisi';
                                         }
                                         final trimmed = v.trim();
-                                        if (!isEditing) {
-                                          final existing = RoomRepository.instance.findByCode(trimmed);
-                                          if (existing != null) {
-                                            return 'Kode "$trimmed" sudah ada (${existing.name})';
-                                          }
+                                        // Saat edit: skip cek duplikat hanya kalau kodenya tidak berubah
+                                        // Kalau kode diubah ke kode lain yang sudah ada, tetap tampilkan error
+                                        if (isEditing && trimmed == widget.initialRoom!.code) {
+                                          return null;
+                                        }
+                                        final existing = RoomRepository.instance.findByCode(trimmed);
+                                        if (existing != null) {
+                                          return 'Kode "$trimmed" sudah ada (${existing.name})';
                                         }
                                         return null;
                                       },

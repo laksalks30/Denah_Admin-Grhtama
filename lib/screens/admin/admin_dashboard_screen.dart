@@ -121,7 +121,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         yRatio: result['yRatio'] as double,
         floor: result['floor'] as int,
       );
-      await RoomRepository.instance.updateRoom(updated);
+      // Pass originalCode agar fallback update by code tidak salah row
+      await RoomRepository.instance.updateRoom(updated, originalCode: room.code);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
