@@ -198,7 +198,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                         obscureText: _obscurePassword,
                         decoration: InputDecoration(
                           labelText: 'Password',
-                          hintText: 'Masukkan kata sandi admin',
+                          hintText: 'admin123',
                           prefixIcon: const Icon(Icons.lock_outline),
                           border: const OutlineInputBorder(),
                           suffixIcon: IconButton(

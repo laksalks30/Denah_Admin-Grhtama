@@ -9,6 +9,14 @@ class SupabaseService {
   bool _initialized = false;
   bool get isReady => _initialized && SupabaseConfig.isConfigured;
 
+  /// Mode autentikasi lokal (fallback bila Supabase tidak tersedia/gagal).
+  /// Digunakan saat proyek dipindahkan tanpa akses ke akun Supabase yang sama.
+  bool _localAuth = false;
+
+  // Kredensial admin default untuk mode lokal
+  static const String _localAdminUser = 'admin';
+  static const String _localAdminPass = 'admin123';
+
   SupabaseClient? get client {
     if (!_initialized) return null;
     try {
@@ -36,22 +44,42 @@ class SupabaseService {
   }
 
   User? get currentUser => client?.auth.currentUser;
-  bool get isAuthenticated => currentUser != null;
+  bool get isAuthenticated => currentUser != null || _localAuth;
 
-  Future<AuthResponse> signInWithPassword({
+  /// Coba login via Supabase. Jika gagal atau belum dikonfigurasi,
+  /// fallback ke autentikasi lokal dengan kredensial admin/admin123.
+  Future<void> signInWithPassword({
     required String email,
     required String password,
   }) async {
-    if (!isReady || client == null) {
-      throw Exception('Supabase belum dikonfigurasi.');
+    // 1. Coba Supabase bila terkonfigurasi
+    if (isReady && client != null) {
+      try {
+        await client!.auth.signInWithPassword(
+          email: email.trim(),
+          password: password,
+        );
+        return; // Berhasil via Supabase
+      } catch (e) {
+        debugPrint('[SupabaseService] Supabase login gagal, cek lokal: $e');
+        // Lanjut ke fallback lokal
+      }
     }
-    return await client!.auth.signInWithPassword(
-      email: email.trim(),
-      password: password,
-    );
+
+    // 2. Fallback: autentikasi lokal
+    //    Ekstrak username dari email (admin@grhatama.id → admin)
+    final username = email.split('@').first.trim().toLowerCase();
+    if (username == _localAdminUser && password == _localAdminPass) {
+      _localAuth = true;
+      debugPrint('[SupabaseService] Login lokal berhasil (admin).');
+      return;
+    }
+
+    throw Exception('Username atau Password salah.');
   }
 
   Future<void> signOut() async {
+    _localAuth = false;
     if (client != null) await client!.auth.signOut();
   }
 }
