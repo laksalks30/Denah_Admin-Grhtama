@@ -54,23 +54,10 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
 
       final password = _passwordController.text.trim();
 
-      try {
-        await SupabaseService.instance.signInWithPassword(
-          email: email,
-          password: password,
-        );
-      } catch (authErr) {
-        // Toleransi password yang seharusnya diawali huruf kapital
-        if (password.isNotEmpty && password[0] == password[0].toLowerCase()) {
-          final capitalized = password[0].toUpperCase() + password.substring(1);
-          await SupabaseService.instance.signInWithPassword(
-            email: email,
-            password: capitalized,
-          );
-        } else {
-          rethrow;
-        }
-      }
+      await SupabaseService.instance.signInWithPassword(
+        email: email,
+        password: password,
+      );
 
       if (mounted) {
         Navigator.of(context).pushReplacement(
@@ -82,10 +69,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
       if (msg.contains('Invalid login credentials') ||
           msg.contains('invalid_credentials') ||
           msg.contains('invalid login')) {
-        msg = 'Username / Email atau Password salah.\n\n'
-            'Akun default:\n'
-            '• Email: admin@grhatama.id\n'
-            '• Password: Admin111111';
+        msg = 'Username / Email atau Password salah.';
       }
       setState(() => _errorMessage = msg);
     } finally {
@@ -198,7 +182,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                         keyboardType: TextInputType.emailAddress,
                         decoration: const InputDecoration(
                           labelText: 'Username atau Email Admin',
-                          hintText: 'admin atau admin@grhatama.id',
+                          hintText: 'admin',
                           prefixIcon: Icon(Icons.person_outline),
                           border: OutlineInputBorder(),
                         ),
@@ -230,56 +214,6 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                           if (v.length < 6) return 'Minimal 6 karakter';
                           return null;
                         },
-                      ),
-                      const SizedBox(height: 14),
-
-                      // Shortcut isi otomatis
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: AppColors.primary.withValues(alpha: 0.08),
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(
-                              color:
-                                  AppColors.primary.withValues(alpha: 0.25)),
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.vpn_key_outlined,
-                                size: 18, color: AppColors.primary),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                'Akun: admin / Admin111111',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: isDark
-                                      ? Colors.white70
-                                      : Colors.black87,
-                                ),
-                              ),
-                            ),
-                            TextButton.icon(
-                              onPressed: () => setState(() {
-                                _emailController.text = 'admin';
-                                _passwordController.text = 'Admin111111';
-                                _errorMessage = null;
-                              }),
-                              icon: const Icon(Icons.flash_on, size: 14),
-                              label: const Text('Isi Otomatis',
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 12)),
-                              style: TextButton.styleFrom(
-                                visualDensity: VisualDensity.compact,
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 6),
-                              ),
-                            ),
-                          ],
-                        ),
                       ),
                       const SizedBox(height: 18),
 
