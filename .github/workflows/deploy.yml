@@ -27,6 +27,9 @@ jobs:
       - name: Build Flutter Web
         run: flutter build web --release --no-tree-shake-icons
 
+      - name: Patch Web for Cache Busting & Service Worker Killer
+        run: python3 scripts/patch_web.py
+
       - name: Deploy to Vercel
         run: npx vercel@62 deploy ./build/web --prod --token=${{ secrets.VERCEL_TOKEN }} --yes
         env:

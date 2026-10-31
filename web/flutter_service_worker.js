@@ -1,6 +1,7 @@
 'use strict';
 
-// Service worker pembunuh cache lama (Cache Killer)
+// Service worker pembunuh cache lama (Cache Destroyer)
+// Memastikan semua cache lama di browser HP dan browser desktop dibersihkan total
 self.addEventListener('install', (event) => {
   self.skipWaiting();
 });
@@ -8,22 +9,22 @@ self.addEventListener('install', (event) => {
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     (async () => {
-      // 1. Hapus semua cache storage lama yang tersimpan di HP
+      // 1. Hapus semua cache storage lama yang tersimpan di HP/browser
       try {
         const cacheKeys = await caches.keys();
         await Promise.all(cacheKeys.map((key) => caches.delete(key)));
       } catch (e) {
-        console.warn('Failed to clear caches:', e);
+        console.warn('[SW] Gagal menghapus caches:', e);
       }
 
-      // 2. Unregister service worker ini selamanya
+      // 2. Unregister service worker ini
       try {
         await self.registration.unregister();
       } catch (e) {
-        console.warn('Failed to unregister:', e);
+        console.warn('[SW] Gagal unregister service worker:', e);
       }
 
-      // 3. Paksa reload semua tab browser yang sedang terbuka
+      // 3. Paksa navigasi/reload semua tab/jendela yang sedang aktif
       try {
         const clients = await self.clients.matchAll({ type: 'window' });
         for (const client of clients) {
@@ -32,8 +33,15 @@ self.addEventListener('activate', (event) => {
           }
         }
       } catch (e) {
-        console.warn('Failed to navigate clients:', e);
+        console.warn('[SW] Gagal navigasi clients:', e);
       }
     })()
+  );
+});
+
+// Jika ada request fetch yang sempat dicegat, jangan pernah ambil dari cache!
+self.addEventListener('fetch', (event) => {
+  event.respondWith(
+    fetch(event.request, { cache: 'no-store' }).catch(() => caches.match(event.request))
   );
 });

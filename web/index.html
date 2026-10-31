@@ -28,15 +28,24 @@
   <title>Peta Interaktif Grhatama Pustaka</title>
   <link rel="manifest" href="manifest.json">
 
-  <!-- Cache Purge: Hapus Service Worker lama secara aman tanpa reload loop -->
+        <!-- Cache Purge: Hapus Service Worker & CacheStorage lama secara tuntas pada HP / Browser -->
   <script>
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.getRegistrations().then(function(regs) {
-        for (var i = 0; i < regs.length; i++) {
-          regs[i].unregister();
-        }
-      });
-    }
+    (function() {
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(function(regs) {
+          for (var i = 0; i < regs.length; i++) {
+            regs[i].unregister();
+          }
+        });
+      }
+      if ('caches' in window) {
+        caches.keys().then(function(names) {
+          for (var i = 0; i < names.length; i++) {
+            caches.delete(names[i]);
+          }
+        });
+      }
+    })();
   </script>
 
   <!-- heic2any: Converter otomatis format iPhone HEIC/HEIF ke JPEG murni -->
@@ -248,6 +257,12 @@
     window.addEventListener('flutter-first-frame', removeLoadingScreen);
   </script>
 
-  <script src="flutter_bootstrap.js?v=20261018_v7" async></script>
+    <script>
+    // Dynamic cache-busting loader untuk flutter_bootstrap.js
+    var s = document.createElement('script');
+    s.src = 'flutter_bootstrap.js?v=' + Date.now();
+    s.async = true;
+    document.body.appendChild(s);
+  </script>
 </body>
 </html>
