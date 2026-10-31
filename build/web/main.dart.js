@@ -48827,10 +48827,10 @@ g=Math.cos(j)
 f=Math.sin(j)
 e=p.eQ()
 l.drawLine.apply(l,[c+n*i,b+n*h,c+m*g,b+m*f,e])
-e.delete()}d.S3(90,a0,a,d.b,c*0.52,!0,c*0.18)
+e.delete()}d.S3(-90,a0,a,d.b,c*0.52,!0,c*0.18)
 b=r?B.f.am(0.35):B.l.am(0.2)
-d.S3(-90,a0,a,b,c*0.42,!1,c*0.14)
-A.ab([90,"U",-90,"S",180,"T",0,"B"],t.i,t.N).au(0,new A.atc(d,a,c,a0))},
+d.S3(90,a0,a,b,c*0.42,!1,c*0.14)
+A.ab([-90,"U",90,"S",0,"T",180,"B"],t.i,t.N).au(0,new A.atc(d,a,c,a0))},
 S3(a,b,c,d,e,f,g){var s=a*0.017453292519943295,r=c.a,q=Math.cos(s),p=c.b,o=Math.sin(s),n=e*0.15,m=new A.f(r-n*Math.cos(s),p-n*Math.sin(s)),l=new A.f(-Math.sin(s),Math.cos(s)),k=m.S(0,l.a6(0,g)),j=m.U(0,l.a6(0,g)),i=A.bQ($.a4().r)
 i.ar(new A.f_(r+e*q,p+e*o))
 i.ar(new A.ck(k.a,k.b))
@@ -48846,7 +48846,7 @@ r.b=B.bG
 b.hv(i,r)},
 e7(a){return!a.b.k(0,this.b)||a.c!==this.c}}
 A.atc.prototype={
-$2(a,b){var s,r,q,p=this,o=null,n=a===90,m=a*0.017453292519943295,l=p.b,k=p.c*0.82,j=Math.cos(m),i=Math.sin(m)
+$2(a,b){var s,r,q,p=this,o=null,n=a===-90,m=a*0.017453292519943295,l=p.b,k=p.c*0.82,j=Math.cos(m),i=Math.sin(m)
 if(n)s=p.a.b
 else s=p.a.c?B.f.am(0.55):B.l.am(0.45)
 r=n?11:9

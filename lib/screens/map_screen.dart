@@ -1005,22 +1005,22 @@ class _CompassPainter extends CustomPainter {
       canvas.drawLine(inner, outer, tickPaint);
     }
 
-    // ── Panah Utara (merah) — di BAWAH peta ─────────────────────────────
+    // ── Panah Utara (merah) — di ATAS peta ─────────────────────────────
     _drawArrow(
       canvas: canvas,
       center: center,
-      angleDeg: 90, // bawah = utara (sesuai orientasi peta)
+      angleDeg: -90, // atas = utara (sesuai orientasi peta baru)
       length: radius * 0.52,
       tipWidth: radius * 0.18,
       color: primaryColor,
       shadow: true,
     );
 
-    // ── Panah Selatan (abu/gelap) — di ATAS peta ─────────────────────────
+    // ── Panah Selatan (abu/gelap) — di BAWAH peta ─────────────────────────
     _drawArrow(
       canvas: canvas,
       center: center,
-      angleDeg: -90, // atas = selatan
+      angleDeg: 90, // bawah = selatan
       length: radius * 0.42,
       tipWidth: radius * 0.14,
       color: isDark
@@ -1031,14 +1031,14 @@ class _CompassPainter extends CustomPainter {
 
     // ── Label U / S / T / B ───────────────────────────────────────────────
     final labels = {
-       90.0: 'U',   // Utara — bawah
-      -90.0: 'S',   // Selatan — atas
-      180.0: 'T',   // Timur — kiri
-        0.0: 'B',   // Barat — kanan
+      -90.0: 'U',   // Utara — atas
+       90.0: 'S',   // Selatan — bawah
+        0.0: 'T',   // Timur — kanan
+      180.0: 'B',   // Barat — kiri
     };
 
     labels.forEach((angleDeg, label) {
-      final isNorth = angleDeg == 90.0;
+      final isNorth = angleDeg == -90.0;
       final rad = _deg2rad(angleDeg);
       final pos = Offset(
         center.dx + (radius * 0.82) * math.cos(rad),
